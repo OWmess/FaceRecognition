@@ -10,6 +10,7 @@
 #include "cuda_runtime_api.h"
 #include "logging.h"
 #include "../config.h"
+#include "ArcFace_R100.h"
 #define CHECK(status) \
     do\
     {\
@@ -22,19 +23,9 @@
     } while (0)
 
 
-using namespace nvinfer1;
-
-// stuff we know about the network and the input/output blobs
-static const int INPUT_H = 112;
-static const int INPUT_W = 112;
-static const int OUTPUT_SIZE = 512;
-const char* INPUT_BLOB_NAME = "data";
-const char* OUTPUT_BLOB_NAME = "prob";
-static Logger gLogger;
-
 // TensorRT weight files have a simple space delimited format:
 // [type] [size] <data x size in hex>
-std::map<std::string, Weights> loadWeights(const std::string file) {
+std::map<std::string, Weights> ArcFace::loadWeights(const std::string file) {
     std::cout << "Loading weights: " << file << std::endl;
     std::map<std::string, Weights> weightMap;
 
@@ -72,7 +63,7 @@ std::map<std::string, Weights> loadWeights(const std::string file) {
     return weightMap;
 }
 
-IScaleLayer* addBatchNorm2d(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, std::string lname, float eps) {
+IScaleLayer* ArcFace::addBatchNorm2d(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, std::string lname, float eps) {
     float *gamma = (float*)weightMap[lname + "_gamma"].values;
     float *beta = (float*)weightMap[lname + "_beta"].values;
     float *mean = (float*)weightMap[lname + "_moving_mean"].values;
@@ -105,7 +96,7 @@ IScaleLayer* addBatchNorm2d(INetworkDefinition *network, std::map<std::string, W
     return scale_1;
 }
 
-ILayer* addPRelu(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, std::string lname) {
+ILayer* ArcFace::addPRelu(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, std::string lname) {
 	float *gamma = (float*)weightMap[lname + "_gamma"].values;
 	int len = weightMap[lname + "_gamma"].count;
 
@@ -143,7 +134,7 @@ ILayer* addPRelu(INetworkDefinition *network, std::map<std::string, Weights>& we
 	return ew1;
 }
 
-ILayer* resUnit(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, int num_filters, int s, bool dim_match, std::string lname) {
+ILayer* ArcFace::resUnit(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, int num_filters, int s, bool dim_match, std::string lname) {
     Weights emptywts{DataType::kFLOAT, nullptr, 0};
     auto bn1 = addBatchNorm2d(network, weightMap, input, lname + "_bn1", 2e-5);
     IConvolutionLayer* conv1 = network->addConvolutionNd(*bn1->getOutput(0), num_filters, DimsHW{3, 3}, weightMap[lname + "_conv1_weight"], emptywts);
@@ -172,7 +163,7 @@ ILayer* resUnit(INetworkDefinition *network, std::map<std::string, Weights>& wei
 }
 
 // Creat the engine using only the API and not any parser.
-ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder* builder, IBuilderConfig* config, DataType dt) {
+ICudaEngine* ArcFace::createEngine(unsigned int maxBatchSize, IBuilder* builder, IBuilderConfig* config, DataType dt) {
     INetworkDefinition* network = builder->createNetworkV2(0U);
 
     // Create input tensor of shape {3, INPUT_H, INPUT_W} with name INPUT_BLOB_NAME
@@ -275,7 +266,7 @@ ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder* builder, IBuilder
     return engine;
 }
 
-void APIToModel(unsigned int maxBatchSize, IHostMemory** modelStream) {
+void ArcFace::APIToModel(unsigned int maxBatchSize, IHostMemory** modelStream) {
     // Create builder
     IBuilder* builder = createInferBuilder(gLogger);
     IBuilderConfig* config = builder->createBuilderConfig();
@@ -292,7 +283,7 @@ void APIToModel(unsigned int maxBatchSize, IHostMemory** modelStream) {
     builder->destroy();
 }
 
-void doInference(IExecutionContext& context, float* input, float* output, int batchSize) {
+void ArcFace::doInference(IExecutionContext& context, float* input, float* output, int batchSize) {
     const ICudaEngine& engine = context.getEngine();
 
     // Pointers to input and output device buffers to pass to engine.
@@ -325,29 +316,9 @@ void doInference(IExecutionContext& context, float* input, float* output, int ba
     CHECK(cudaFree(buffers[outputIndex]));
 }
 
-int read_files_in_dir(const char *p_dir_name, std::vector<std::string> &file_names) {
-    DIR *p_dir = opendir(p_dir_name);
-    if (p_dir == nullptr) {
-        return -1;
-    }
+void ArcFace::process() {
+    int argc;char **argv;
 
-    struct dirent* p_file = nullptr;
-    while ((p_file = readdir(p_dir)) != nullptr) {
-        if (strcmp(p_file->d_name, ".") != 0 &&
-                strcmp(p_file->d_name, "..") != 0) {
-            //std::string cur_file_name(p_dir_name);
-            //cur_file_name += "/";
-            //cur_file_name += p_file->d_name;
-            std::string cur_file_name(p_file->d_name);
-            file_names.push_back(cur_file_name);
-        }
-    }
-
-    closedir(p_dir);
-    return 0;
-}
-
-int main(int argc, char** argv) {
     cudaSetDevice(DEVICE);
     // create a model using the API directly and serialize it to a stream
     char *trtModelStream{nullptr};
@@ -360,11 +331,11 @@ int main(int argc, char** argv) {
         std::ofstream p("arcface-r100.engine", std::ios::binary);
         if (!p) {
             std::cerr << "could not open plan output file" << std::endl;
-            return -1;
+            return;//TODO:待修改
         }
         p.write(reinterpret_cast<const char*>(modelStream->data()), modelStream->size());
         modelStream->destroy();
-        return 0;
+        return;//TODO:待修改
     } else if (argc == 2 && std::string(argv[1]) == "-d") {
         std::ifstream file("arcface-r100.engine", std::ios::binary);
         if (file.good()) {
@@ -380,7 +351,7 @@ int main(int argc, char** argv) {
         std::cerr << "arguments not right!" << std::endl;
         std::cerr << "./arcface-r100 -s  // serialize model to plan file" << std::endl;
         std::cerr << "./arcface-r100 -d  // deserialize plan file and run inference" << std::endl;
-        return -1;
+        return;//TODO:待修改
     }
 
     // prepare input data ---------------------------
@@ -448,5 +419,4 @@ int main(int argc, char** argv) {
     //}
     //std::cout << std::endl;
 
-    return 0;
 }

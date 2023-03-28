@@ -6,24 +6,11 @@
 #include <vector>
 #include <chrono>
 #include "cuda_runtime_api.h"
-#include "logging.h"
-#include "common.hpp"
 #include "calibrator.h"
 #include "opencv2/opencv.hpp"
-#include "../config.h"
+#include "RetinaFace_R50.h"
 
-
-
-// stuff we know about the network and the input/output blobs
-static const int INPUT_H = decodeplugin::INPUT_H;  // H, W must be able to  be divided by 32.
-static const int INPUT_W = decodeplugin::INPUT_W;;
-static const int OUTPUT_SIZE = (INPUT_H / 8 * INPUT_W / 8 + INPUT_H / 16 * INPUT_W / 16 + INPUT_H / 32 * INPUT_W / 32) * 2  * 15 + 1;
-const char* INPUT_BLOB_NAME = "data";
-const char* OUTPUT_BLOB_NAME = "prob";
-
-static Logger gLogger;
-
-IActivationLayer* bottleneck(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, int inch, int outch, int stride, std::string lname) {
+IActivationLayer* RetinaFace::bottleneck(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, int inch, int outch, int stride, std::string lname) {
     Weights emptywts{DataType::kFLOAT, nullptr, 0};
 
     IConvolutionLayer* conv1 = network->addConvolutionNd(input, outch, DimsHW{1, 1}, weightMap[lname + "conv1.weight"], emptywts);
@@ -65,7 +52,7 @@ IActivationLayer* bottleneck(INetworkDefinition *network, std::map<std::string, 
     return relu3;
 }
 
-ILayer* conv_bn_relu(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, int outch, int kernelsize, int stride, int padding, bool userelu, std::string lname) {
+ILayer* RetinaFace::conv_bn_relu(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, int outch, int kernelsize, int stride, int padding, bool userelu, std::string lname) {
     Weights emptywts{DataType::kFLOAT, nullptr, 0};
 
     IConvolutionLayer* conv1 = network->addConvolutionNd(input, outch, DimsHW{kernelsize, kernelsize}, getWeights(weightMap, lname + ".0.weight"), emptywts);
@@ -83,7 +70,7 @@ ILayer* conv_bn_relu(INetworkDefinition *network, std::map<std::string, Weights>
     return relu1;
 }
 
-IActivationLayer* ssh(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, std::string lname) {
+IActivationLayer* RetinaFace::ssh(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, std::string lname) {
     auto conv3x3 = conv_bn_relu(network, weightMap, input, 256 / 2, 3, 1, 1, false, lname + ".conv3X3");
     auto conv5x5_1 = conv_bn_relu(network, weightMap, input, 256 / 4, 3, 1, 1, true, lname + ".conv5X5_1");
     auto conv5x5 = conv_bn_relu(network, weightMap, *conv5x5_1->getOutput(0), 256 / 4, 3, 1, 1, false, lname + ".conv5X5_2");
@@ -97,7 +84,7 @@ IActivationLayer* ssh(INetworkDefinition *network, std::map<std::string, Weights
 }
 
 // Creat the engine using only the API and not any parser.
-ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder* builder, IBuilderConfig* config, DataType dt) {
+ICudaEngine* RetinaFace::createEngine(unsigned int maxBatchSize, IBuilder* builder, IBuilderConfig* config, DataType dt) {
     INetworkDefinition* network = builder->createNetworkV2(0U);
 
     // Create input tensor with name INPUT_BLOB_NAME
@@ -227,7 +214,7 @@ ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder* builder, IBuilder
     ICudaEngine* engine = builder->buildEngineWithConfig(*network, *config);
     std::cout << "Build engine successfully!" << std::endl;
 
-    // Don't need the network any more
+    // Don't need the network anymore
     network->destroy();
 
     // Release host memory
@@ -240,7 +227,7 @@ ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder* builder, IBuilder
     return engine;
 }
 
-void APIToModel(unsigned int maxBatchSize, IHostMemory** modelStream) {
+void RetinaFace::APIToModel(unsigned int maxBatchSize, IHostMemory** modelStream) {
     // Create builder
     IBuilder* builder = createInferBuilder(gLogger);
     IBuilderConfig* config = builder->createBuilderConfig();
@@ -257,7 +244,7 @@ void APIToModel(unsigned int maxBatchSize, IHostMemory** modelStream) {
     builder->destroy();
 }
 
-void doInference(IExecutionContext& context, float* input, float* output, int batchSize) {
+void RetinaFace::doInference(IExecutionContext& context, float* input, float* output, int batchSize) {
     const ICudaEngine& engine = context.getEngine();
 
     // Pointers to input and output device buffers to pass to engine.
@@ -290,13 +277,16 @@ void doInference(IExecutionContext& context, float* input, float* output, int ba
     CHECK(cudaFree(buffers[outputIndex]));
 }
 
-int main(int argc, char** argv) {
-    if (argc != 2) {
-        std::cerr << "arguments not right!" << std::endl;
-        std::cerr << "./retina_r50 -s   // serialize model to plan file" << std::endl;
-        std::cerr << "./retina_r50 -d   // deserialize plan file and run inference" << std::endl;
-        return -1;
-    }
+void RetinaFace::process() {
+    char** argv;//TODO: 待删除
+
+
+//    if (argc != 2) {
+//        std::cerr << "arguments not right!" << std::endl;
+//        std::cerr << "./retina_r50 -s   // serialize model to plan file" << std::endl;
+//        std::cerr << "./retina_r50 -d   // deserialize plan file and run inference" << std::endl;
+//        return -1;
+//    }
 
     cudaSetDevice(DEVICE);
     // create a model using the API directly and serialize it to a stream
@@ -311,11 +301,11 @@ int main(int argc, char** argv) {
         std::ofstream p("retina_r50.engine", std::ios::binary);
         if (!p) {
             std::cerr << "could not open plan output file" << std::endl;
-            return -1;
+            return ;//TODO:待修改
         }
         p.write(reinterpret_cast<const char*>(modelStream->data()), modelStream->size());
         modelStream->destroy();
-        return 1;
+        return;//TODO:待修改
     } else if (std::string(argv[1]) == "-d") {
         std::ifstream file("retina_r50.engine", std::ios::binary);
         if (file.good()) {
@@ -328,7 +318,7 @@ int main(int argc, char** argv) {
             file.close();
         }
     } else {
-        return -1;
+        return;//TODO:待修改
     }
 
     // prepare input data ---------------------------
@@ -420,5 +410,4 @@ int main(int argc, char** argv) {
     //}
     //std::cout << std::endl;
 
-    return 0;
 }

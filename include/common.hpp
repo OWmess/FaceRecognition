@@ -4,7 +4,7 @@
 #include <dirent.h>
 #include "NvInfer.h"
 #include "decode.h"
-
+#include <fstream>
 using namespace nvinfer1;
 
 #define CHECK(status) \
