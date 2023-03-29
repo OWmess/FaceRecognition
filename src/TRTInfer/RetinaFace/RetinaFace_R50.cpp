@@ -227,56 +227,6 @@ ICudaEngine* RetinaFace::createEngine(unsigned int maxBatchSize, IBuilder* build
     return engine;
 }
 
-void RetinaFace::APIToModel(unsigned int maxBatchSize, IHostMemory** modelStream) {
-    // Create builder
-    IBuilder* builder = createInferBuilder(gLogger);
-    IBuilderConfig* config = builder->createBuilderConfig();
-
-    // Create model to populate the network, then set the outputs and create an engine
-    ICudaEngine* engine = createEngine(maxBatchSize, builder, config, DataType::kFLOAT);
-    assert(engine != nullptr);
-
-    // Serialize the engine
-    (*modelStream) = engine->serialize();
-
-    // Close everything down
-    engine->destroy();
-    builder->destroy();
-}
-
-void RetinaFace::doInference(IExecutionContext& context, float* input, float* output, int batchSize) {
-    const ICudaEngine& engine = context.getEngine();
-
-    // Pointers to input and output device buffers to pass to engine.
-    // Engine requires exactly IEngine::getNbBindings() number of buffers.
-    assert(engine.getNbBindings() == 2);
-    void* buffers[2];
-
-    // In order to bind the buffers, we need to know the names of the input and output tensors.
-    // Note that indices are guaranteed to be less than IEngine::getNbBindings()
-    const int inputIndex = engine.getBindingIndex(INPUT_BLOB_NAME);
-    const int outputIndex = engine.getBindingIndex(OUTPUT_BLOB_NAME);
-
-    // Create GPU buffers on device
-    CHECK(cudaMalloc(&buffers[inputIndex], batchSize * 3 * INPUT_H * INPUT_W * sizeof(float)));
-    CHECK(cudaMalloc(&buffers[outputIndex], batchSize * OUTPUT_SIZE * sizeof(float)));
-
-    // Create stream
-    cudaStream_t stream;
-    CHECK(cudaStreamCreate(&stream));
-
-    // DMA input batch data to device, infer on the batch asynchronously, and DMA output back to host
-    CHECK(cudaMemcpyAsync(buffers[inputIndex], input, batchSize * 3 * INPUT_H * INPUT_W * sizeof(float), cudaMemcpyHostToDevice, stream));
-    context.enqueue(batchSize, buffers, stream, nullptr);
-    CHECK(cudaMemcpyAsync(output, buffers[outputIndex], batchSize * OUTPUT_SIZE * sizeof(float), cudaMemcpyDeviceToHost, stream));
-    cudaStreamSynchronize(stream);
-
-    // Release stream and buffers
-    cudaStreamDestroy(stream);
-    CHECK(cudaFree(buffers[inputIndex]));
-    CHECK(cudaFree(buffers[outputIndex]));
-}
-
 void RetinaFace::process() {
     char** argv;//TODO: 待删除
 
@@ -293,20 +243,20 @@ void RetinaFace::process() {
     char *trtModelStream{nullptr};
     size_t size{0};
 
-    if (std::string(argv[1]) == "-s") {
-        IHostMemory* modelStream{nullptr};
-        APIToModel(BATCH_SIZE, &modelStream);
-        assert(modelStream != nullptr);
-
-        std::ofstream p("retina_r50.engine", std::ios::binary);
-        if (!p) {
-            std::cerr << "could not open plan output file" << std::endl;
-            return ;//TODO:待修改
-        }
-        p.write(reinterpret_cast<const char*>(modelStream->data()), modelStream->size());
-        modelStream->destroy();
-        return;//TODO:待修改
-    } else if (std::string(argv[1]) == "-d") {
+//    if (std::string(argv[1]) == "-s") {
+//        IHostMemory* modelStream{nullptr};
+//        APIToModel(BATCH_SIZE, &modelStream);
+//        assert(modelStream != nullptr);
+//
+//        std::ofstream p("retina_r50.engine", std::ios::binary);
+//        if (!p) {
+//            std::cerr << "could not open plan output file" << std::endl;
+//            return ;//TODO:待修改
+//        }
+//        p.write(reinterpret_cast<const char*>(modelStream->data()), modelStream->size());
+//        modelStream->destroy();
+//        return;//TODO:待修改
+//    } else if (std::string(argv[1]) == "-d") {
         std::ifstream file("retina_r50.engine", std::ios::binary);
         if (file.good()) {
             file.seekg(0, file.end);
@@ -317,12 +267,13 @@ void RetinaFace::process() {
             file.read(trtModelStream, size);
             file.close();
         }
-    } else {
-        return;//TODO:待修改
-    }
+//    } else {
+//        return;//TODO:待修改
+//    }
 
     // prepare input data ---------------------------
-    static float data[BATCH_SIZE * 3 * INPUT_H * INPUT_W];
+    static float* data=dataPtr.get();
+    static float* prob=probPtr.get();
     //for (int i = 0; i < 3 * INPUT_H * INPUT_W; i++)
     //    data[i] = 1.0;
 
@@ -335,7 +286,7 @@ void RetinaFace::process() {
     assert(context != nullptr);
     //从摄像头读取图像
     cv::VideoCapture capture(0);
-    cv::Mat img = cv::imread("worlds-largest-selfie.jpg");
+    cv::Mat img=cv::imread("worlds-largest-selfie.jpg");
     while(true) {
         int key=cv::waitKey(20);
         if(key==27)
@@ -362,7 +313,7 @@ void RetinaFace::process() {
 
 
         // Run inference
-        static float prob[BATCH_SIZE * OUTPUT_SIZE];
+//        static float prob[BATCH_SIZE * OUTPUT_SIZE];
 //        for (int cc = 0; cc < 1000; cc++) {
 //            auto start = std::chrono::system_clock::now();
 //            doInference(*context, data, prob, BATCH_SIZE);

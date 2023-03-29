@@ -1,7 +1,7 @@
 #ifndef RETINAFACE_COMMON_H_
 #define RETINAFACE_COMMON_H_
 #include <opencv2/opencv.hpp>
-#include <dirent.h>
+#include "dirent.h"
 #include "NvInfer.h"
 #include "decode.h"
 #include <fstream>

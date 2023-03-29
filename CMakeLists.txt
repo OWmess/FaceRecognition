@@ -16,9 +16,9 @@ link_directories(C:\\Program\ Files\\NVIDIA\\TensorRT-8.5.3.1\\lib)
 
 find_package(CUDA REQUIRED)
 #用cuda编译
-cuda_add_library(decodeplugin SHARED ${PROJECT_SOURCE_DIR}/src/RetinaFace/decode.cu)
+cuda_add_library(decodeplugin SHARED src/TRTInfer/RetinaFace/decode.cu)
 target_link_libraries(decodeplugin nvinfer cudart)
-cuda_add_library(preluplugins SHARED ${PROJECT_SOURCE_DIR}/src/ArcFace/prelu.cu)
+cuda_add_library(preluplugins SHARED src/TRTInfer/ArcFace/prelu.cu)
 target_link_libraries(preluplugins nvinfer cudart)
 
 

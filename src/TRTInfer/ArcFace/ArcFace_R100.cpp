@@ -5,12 +5,13 @@
 #include <vector>
 #include <chrono>
 #include <opencv2/opencv.hpp>
-#include <dirent.h>
+#include "dirent.h"
 #include "NvInfer.h"
 #include "cuda_runtime_api.h"
 #include "logging.h"
-#include "../config.h"
+#include "../../config.h"
 #include "ArcFace_R100.h"
+#include "../RetinaFace/common.hpp"
 #define CHECK(status) \
     do\
     {\
@@ -22,46 +23,6 @@
         }\
     } while (0)
 
-
-// TensorRT weight files have a simple space delimited format:
-// [type] [size] <data x size in hex>
-std::map<std::string, Weights> ArcFace::loadWeights(const std::string file) {
-    std::cout << "Loading weights: " << file << std::endl;
-    std::map<std::string, Weights> weightMap;
-
-    // Open weights file
-    std::ifstream input(file);
-    assert(input.is_open() && "Unable to load weight file.");
-
-    // Read number of weight blobs
-    int32_t count;
-    input >> count;
-    assert(count > 0 && "Invalid weight map file.");
-
-    while (count--)
-    {
-        Weights wt{DataType::kFLOAT, nullptr, 0};
-        uint32_t size;
-
-        // Read name and type of blob
-        std::string name;
-        input >> name >> std::dec >> size;
-        wt.type = DataType::kFLOAT;
-
-        // Load blob
-        uint32_t* val = reinterpret_cast<uint32_t*>(malloc(sizeof(val) * size));
-        for (uint32_t x = 0, y = size; x < y; ++x)
-        {
-            input >> std::hex >> val[x];
-        }
-        wt.values = val;
-
-        wt.count = size;
-        weightMap[name] = wt;
-    }
-
-    return weightMap;
-}
 
 IScaleLayer* ArcFace::addBatchNorm2d(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, std::string lname, float eps) {
     float *gamma = (float*)weightMap[lname + "_gamma"].values;
@@ -266,56 +227,6 @@ ICudaEngine* ArcFace::createEngine(unsigned int maxBatchSize, IBuilder* builder,
     return engine;
 }
 
-void ArcFace::APIToModel(unsigned int maxBatchSize, IHostMemory** modelStream) {
-    // Create builder
-    IBuilder* builder = createInferBuilder(gLogger);
-    IBuilderConfig* config = builder->createBuilderConfig();
-
-    // Create model to populate the network, then set the outputs and create an engine
-    ICudaEngine* engine = createEngine(maxBatchSize, builder, config, DataType::kFLOAT);
-    assert(engine != nullptr);
-
-    // Serialize the engine
-    (*modelStream) = engine->serialize();
-
-    // Close everything down
-    engine->destroy();
-    builder->destroy();
-}
-
-void ArcFace::doInference(IExecutionContext& context, float* input, float* output, int batchSize) {
-    const ICudaEngine& engine = context.getEngine();
-
-    // Pointers to input and output device buffers to pass to engine.
-    // Engine requires exactly IEngine::getNbBindings() number of buffers.
-    assert(engine.getNbBindings() == 2);
-    void* buffers[2];
-
-    // In order to bind the buffers, we need to know the names of the input and output tensors.
-    // Note that indices are guaranteed to be less than IEngine::getNbBindings()
-    const int inputIndex = engine.getBindingIndex(INPUT_BLOB_NAME);
-    const int outputIndex = engine.getBindingIndex(OUTPUT_BLOB_NAME);
-
-    // Create GPU buffers on device
-    CHECK(cudaMalloc(&buffers[inputIndex], batchSize * 3 * INPUT_H * INPUT_W * sizeof(float)));
-    CHECK(cudaMalloc(&buffers[outputIndex], batchSize * OUTPUT_SIZE * sizeof(float)));
-
-    // Create stream
-    cudaStream_t stream;
-    CHECK(cudaStreamCreate(&stream));
-
-    // DMA input batch data to device, infer on the batch asynchronously, and DMA output back to host
-    CHECK(cudaMemcpyAsync(buffers[inputIndex], input, batchSize * 3 * INPUT_H * INPUT_W * sizeof(float), cudaMemcpyHostToDevice, stream));
-    context.enqueue(batchSize, buffers, stream, nullptr);
-    CHECK(cudaMemcpyAsync(output, buffers[outputIndex], batchSize * OUTPUT_SIZE * sizeof(float), cudaMemcpyDeviceToHost, stream));
-    cudaStreamSynchronize(stream);
-
-    // Release stream and buffers
-    cudaStreamDestroy(stream);
-    CHECK(cudaFree(buffers[inputIndex]));
-    CHECK(cudaFree(buffers[outputIndex]));
-}
-
 void ArcFace::process() {
     int argc;char **argv;
 
@@ -324,19 +235,19 @@ void ArcFace::process() {
     char *trtModelStream{nullptr};
     size_t size{0};
 
-    if (argc == 2 && std::string(argv[1]) == "-s") {
-        IHostMemory* modelStream{nullptr};
-        APIToModel(256, &modelStream);
-        assert(modelStream != nullptr);
-        std::ofstream p("arcface-r100.engine", std::ios::binary);
-        if (!p) {
-            std::cerr << "could not open plan output file" << std::endl;
-            return;//TODO:待修改
-        }
-        p.write(reinterpret_cast<const char*>(modelStream->data()), modelStream->size());
-        modelStream->destroy();
-        return;//TODO:待修改
-    } else if (argc == 2 && std::string(argv[1]) == "-d") {
+//    if (argc == 2 && std::string(argv[1]) == "-s") {
+//        IHostMemory* modelStream{nullptr};
+//        APIToModel(256, &modelStream);
+//        assert(modelStream != nullptr);
+//        std::ofstream p("arcface-r100.engine", std::ios::binary);
+//        if (!p) {
+//            std::cerr << "could not open plan output file" << std::endl;
+//            return;//TODO:待修改
+//        }
+//        p.write(reinterpret_cast<const char*>(modelStream->data()), modelStream->size());
+//        modelStream->destroy();
+//        return;//TODO:待修改
+//    } else if (argc == 2 && std::string(argv[1]) == "-d") {
         std::ifstream file("arcface-r100.engine", std::ios::binary);
         if (file.good()) {
             file.seekg(0, file.end);
@@ -347,18 +258,18 @@ void ArcFace::process() {
             file.read(trtModelStream, size);
             file.close();
         }
-    } else {
-        std::cerr << "arguments not right!" << std::endl;
-        std::cerr << "./arcface-r100 -s  // serialize model to plan file" << std::endl;
-        std::cerr << "./arcface-r100 -d  // deserialize plan file and run inference" << std::endl;
-        return;//TODO:待修改
-    }
+//    } else {
+//        std::cerr << "arguments not right!" << std::endl;
+//        std::cerr << "./arcface-r100 -s  // serialize model to plan file" << std::endl;
+//        std::cerr << "./arcface-r100 -d  // deserialize plan file and run inference" << std::endl;
+//        return;//TODO:待修改
+//    }
 
     // prepare input data ---------------------------
-    static float data[BATCH_SIZE * 3 * INPUT_H * INPUT_W];
+    static float* data=dataPtr.get();
     //for (int i = 0; i < 3 * INPUT_H * INPUT_W; i++)
     //    data[i] = 1.0;
-    static float prob[BATCH_SIZE * OUTPUT_SIZE];
+    static float* prob=probPtr.get();
     IRuntime* runtime = createInferRuntime(gLogger);
     assert(runtime != nullptr);
     ICudaEngine* engine = runtime->deserializeCudaEngine(trtModelStream, size);
