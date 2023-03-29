@@ -248,7 +248,7 @@ void ArcFace::process() {
 //        modelStream->destroy();
 //        return;//TODO:待修改
 //    } else if (argc == 2 && std::string(argv[1]) == "-d") {
-        std::ifstream file("arcface-r100.engine", std::ios::binary);
+        std::ifstream file(GET_PRJ_DIR()+"/models/arcface-r100.engine", std::ios::binary);
         if (file.good()) {
             file.seekg(0, file.end);
             size = file.tellg();

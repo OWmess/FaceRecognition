@@ -1,9 +1,11 @@
-#include "TRTInfer/TRTInfer.h"
-#include "TRTInfer/RetinaFace/RetinaFace_R50.h"
-#include "TRTInfer/ArcFace/ArcFace_R100.h"
 //
 // Created by q1162 on 2023/3/28.
 //
+#include "TRTInfer/TRTInfer.h"
+#include "TRTInfer/RetinaFace/RetinaFace_R50.h"
+#include "TRTInfer/ArcFace/ArcFace_R100.h"
+#include "config.h"
+#include <direct.h>
 int main(int argc, char** argv){
 //    constexpr int w=640,h=480,outputSize=(h / 8 * w / 8 + h / 16 * w / 16 +h / 32 * w / 32) * 2  * 15 + 1;
 

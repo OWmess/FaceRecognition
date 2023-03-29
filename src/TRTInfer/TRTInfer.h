@@ -6,7 +6,7 @@
 #include "logging.h"
 #include "NvInfer.h"
 #include "../config.h"
-
+#include "../utils.h"
 #define CHECK(status) \
     do\
     {\
