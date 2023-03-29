@@ -91,7 +91,7 @@ ICudaEngine* RetinaFace::createEngine(unsigned int maxBatchSize, IBuilder* build
     ITensor* data = network->addInput(INPUT_BLOB_NAME, dt, Dims3{3, INPUT_H, INPUT_W});
     assert(data);
 
-    std::map<std::string, Weights> weightMap = loadWeights("../retinaface.wts");
+    std::map<std::string, Weights> weightMap = loadWeights(_modelPath);
     Weights emptywts{DataType::kFLOAT, nullptr, 0};
 
     // ------------- backbone resnet50 ---------------
@@ -228,52 +228,13 @@ ICudaEngine* RetinaFace::createEngine(unsigned int maxBatchSize, IBuilder* build
 }
 
 void RetinaFace::process() {
-    char** argv;//TODO: 待删除
 
-
-//    if (argc != 2) {
-//        std::cerr << "arguments not right!" << std::endl;
-//        std::cerr << "./retina_r50 -s   // serialize model to plan file" << std::endl;
-//        std::cerr << "./retina_r50 -d   // deserialize plan file and run inference" << std::endl;
-//        return -1;
-//    }
-
-    cudaSetDevice(DEVICE);
-    // create a model using the API directly and serialize it to a stream
     char *trtModelStream{nullptr};
     size_t size{0};
-
-//    if (std::string(argv[1]) == "-s") {
-//        IHostMemory* modelStream{nullptr};
-//        APIToModel(BATCH_SIZE, &modelStream);
-//        assert(modelStream != nullptr);
-//
-//        std::ofstream p("retina_r50.engine", std::ios::binary);
-//        if (!p) {
-//            std::cerr << "could not open plan output file" << std::endl;
-//            return ;//TODO:待修改
-//        }
-//        p.write(reinterpret_cast<const char*>(modelStream->data()), modelStream->size());
-//        modelStream->destroy();
-//        return;//TODO:待修改
-//    } else if (std::string(argv[1]) == "-d") {
-        std::ifstream file("retina_r50.engine", std::ios::binary);
-        if (file.good()) {
-            file.seekg(0, file.end);
-            size = file.tellg();
-            file.seekg(0, file.beg);
-            trtModelStream = new char[size];
-            assert(trtModelStream);
-            file.read(trtModelStream, size);
-            file.close();
-        }
-//    } else {
-//        return;//TODO:待修改
-//    }
-
+    loadModel(trtModelStream,size);
     // prepare input data ---------------------------
-    static float* data=dataPtr.get();
-    static float* prob=probPtr.get();
+    static float* data=_dataPtr.get();
+    static float* prob=_probPtr.get();
     //for (int i = 0; i < 3 * INPUT_H * INPUT_W; i++)
     //    data[i] = 1.0;
 

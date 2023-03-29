@@ -131,7 +131,7 @@ ICudaEngine* ArcFace::createEngine(unsigned int maxBatchSize, IBuilder* builder,
     ITensor* data = network->addInput(INPUT_BLOB_NAME, dt, Dims3{3, INPUT_H, INPUT_W});
     assert(data);
 
-    std::map<std::string, Weights> weightMap = loadWeights("../arcface-r100.wts");
+    std::map<std::string, Weights> weightMap = loadWeights(_modelPath);
     Weights emptywts{DataType::kFLOAT, nullptr, 0};
 
     IConvolutionLayer* conv0 = network->addConvolutionNd(*data, 64, DimsHW{3, 3}, weightMap["conv0_weight"], emptywts);
@@ -266,10 +266,10 @@ void ArcFace::process() {
 //    }
 
     // prepare input data ---------------------------
-    static float* data=dataPtr.get();
+    static float* data=_dataPtr.get();
     //for (int i = 0; i < 3 * INPUT_H * INPUT_W; i++)
     //    data[i] = 1.0;
-    static float* prob=probPtr.get();
+    static float* prob=_probPtr.get();
     IRuntime* runtime = createInferRuntime(gLogger);
     assert(runtime != nullptr);
     ICudaEngine* engine = runtime->deserializeCudaEngine(trtModelStream, size);

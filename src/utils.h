@@ -13,11 +13,10 @@ inline std::string GET_PRJ_DIR(){
     {
         if (std::filesystem::exists(currentPath / PRJ_NAME))
         {
-            std::cout << "Found FaceRecognition directory at: " << (currentPath / PRJ_NAME) << std::endl;
             return currentPath.generic_string()+"/"+PRJ_NAME;
         }
         currentPath = currentPath.parent_path();
     }
-    return "NOT FOUND";
+    return "GET_PRJ_DIR FAIL!";
 }
 #endif //FACERECOGNITION_UTILS_H

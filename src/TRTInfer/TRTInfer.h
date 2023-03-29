@@ -3,10 +3,13 @@
 //
 #ifndef FACERECOGNITION_TRTINFER_H
 #define FACERECOGNITION_TRTINFER_H
+#include <utility>
 #include "logging.h"
 #include "NvInfer.h"
 #include "../config.h"
 #include "../utils.h"
+#include <filesystem>
+#include <fstream>
 #define CHECK(status) \
     do\
     {\
@@ -26,8 +29,8 @@ public:
     TRTInfer(int w,int h,int o):INPUT_W(w),INPUT_H(h),OUTPUT_SIZE(o) {
         std::shared_ptr<float> a(new float[BATCH_SIZE * 3 * INPUT_H * INPUT_W]);
         std::shared_ptr<float> b(new float[BATCH_SIZE * OUTPUT_SIZE]);
-        dataPtr=std::move(a);
-        probPtr=std::move(b);
+        _dataPtr=std::move(a);
+        _probPtr=std::move(b);
 
     }
     virtual ~TRTInfer()= default;
@@ -85,16 +88,57 @@ public:
         builder->destroy();
     }
 
+    void setModelPath(std::string str){
+        _modelPath=std::move(str);
+    }
+
+    void loadModel(char* trtModelStream,size_t& size) {
+        namespace fs = std::filesystem;
+        fs::path modelPath(_modelPath);
+        fs::path cachePath=modelPath;
+        cachePath.replace_extension("engine");
+
+        cudaSetDevice(DEVICE);
+        if(!fs::exists(cachePath)){
+            if(!fs::exists(modelPath)) {
+                std::cerr << "Load model fail!" << std::endl;
+                exit(-1);
+            }
+            IHostMemory *modelStream{nullptr};
+            APIToModel(BATCH_SIZE, &modelStream);
+            assert(modelStream != nullptr);
+
+            std::ofstream p(cachePath.generic_string(), std::ios::binary);
+            assert(!p);
+            p.write(reinterpret_cast<const char *>(modelStream->data()), modelStream->size());
+            modelStream->destroy();
+        }
+
+        std::ifstream file(cachePath.generic_string(), std::ios::binary);
+
+        if (file.good()) {
+            file.seekg(0, file.end);
+            size = file.tellg();
+            file.seekg(0, file.beg);
+            trtModelStream = new char[size];
+            assert(trtModelStream);
+            file.read(trtModelStream, size);
+            file.close();
+        }
 
 
+
+
+    }
 protected:
     Logger gLogger;
     // stuff we know about the network and the input/output blobs
     int INPUT_H,INPUT_W,OUTPUT_SIZE;
     const char* INPUT_BLOB_NAME = "data";
     const char* OUTPUT_BLOB_NAME = "prob";
-    std::shared_ptr<float> dataPtr;
-    std::shared_ptr<float> probPtr;
+    std::shared_ptr<float> _dataPtr;
+    std::shared_ptr<float> _probPtr;
+    std::string _modelPath;
 };
 
 
