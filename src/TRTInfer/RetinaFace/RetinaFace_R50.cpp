@@ -231,7 +231,7 @@ void RetinaFace::process() {
 
     char *trtModelStream{nullptr};
     size_t size{0};
-    loadModel(trtModelStream,size);
+    loadModel(&trtModelStream,size);
     // prepare input data ---------------------------
     static float* data=_dataPtr.get();
     static float* prob=_probPtr.get();

@@ -92,7 +92,7 @@ public:
         _modelPath=std::move(str);
     }
 
-    void loadModel(char* trtModelStream,size_t& size) {
+    void loadModel(char** trtModelStream,size_t& size) {
         namespace fs = std::filesystem;
         fs::path modelPath(_modelPath);
         fs::path cachePath=modelPath;
@@ -120,9 +120,9 @@ public:
             file.seekg(0, file.end);
             size = file.tellg();
             file.seekg(0, file.beg);
-            trtModelStream = new char[size];
-            assert(trtModelStream);
-            file.read(trtModelStream, size);
+            *trtModelStream = new char[size];
+            assert(*trtModelStream);
+            file.read(*trtModelStream, size);
             file.close();
         }
 
