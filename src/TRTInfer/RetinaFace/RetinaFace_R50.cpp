@@ -5,7 +5,9 @@
 #include <sstream>
 #include <vector>
 #include <chrono>
+#include <cuda.h>
 #include "cuda_runtime_api.h"
+#include <NvInfer.h>
 #include "calibrator.h"
 #include "opencv2/opencv.hpp"
 #include "RetinaFace_R50.h"
@@ -199,7 +201,14 @@ ICudaEngine* RetinaFace::createEngine(unsigned int maxBatchSize, IBuilder* build
 
     // Build engine
     builder->setMaxBatchSize(maxBatchSize);
-    config->setMaxWorkspaceSize(1 << 20);
+    size_t freeCuMem, totalCuMem;
+    cuMemGetInfo(&freeCuMem, &totalCuMem);
+    std::cout << "[INFO]: total gpu mem: " << (totalCuMem >> 20) << "MB, free gpu mem: " << (freeCuMem >> 20) << "MB"
+              << std::endl;
+    std::cout << "[INFO]: max workspace size will use all of free gpu mem" << std::endl;
+    config->setMaxWorkspaceSize(freeCuMem);
+
+//    config->setMaxWorkspaceSize(1 << 20);
 #if defined(USE_FP16)
     config->setFlag(BuilderFlag::kFP16);
 #elif defined(USE_INT8)

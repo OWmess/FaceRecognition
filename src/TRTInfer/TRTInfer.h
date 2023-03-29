@@ -71,7 +71,7 @@ public:
         CHECK(cudaFree(buffers[outputIndex]));
     }
 
-    void APIToModel(unsigned int maxBatchSize, IHostMemory** modelStream) {
+    void  APIToModel(unsigned int maxBatchSize, IHostMemory** modelStream) {
         // Create builder
         IBuilder* builder = createInferBuilder(gLogger);
         IBuilderConfig* config = builder->createBuilderConfig();
@@ -85,6 +85,7 @@ public:
 
         // Close everything down
         engine->destroy();
+        config->destroy();
         builder->destroy();
     }
 
@@ -104,6 +105,7 @@ public:
                 std::cerr << "Load model fail!" << std::endl;
                 exit(-1);
             }
+            std::cout<<"prepare to build model engine..\nIt will takes a while..."<<std::endl;
             IHostMemory *modelStream{nullptr};
             APIToModel(BATCH_SIZE, &modelStream);
             assert(modelStream != nullptr);
