@@ -18,7 +18,7 @@ using namespace nvinfer1;
         }\
     } while (0)
 
-static inline cv::Mat preprocess_img(cv::Mat& img, int input_w, int input_h) {
+static inline cv::Mat preprocess_img(const cv::Mat& img, int input_w, int input_h) {
     int w, h, x, y;
     float r_w = input_w / (img.cols*1.0);
     float r_h = input_h / (img.rows*1.0);
@@ -62,7 +62,7 @@ static inline int read_files_in_dir(const char *p_dir_name, std::vector<std::str
     return 0;
 }
 
-static inline cv::Rect get_rect_adapt_landmark(cv::Mat& img, int input_w, int input_h, float bbox[4], float lmk[10]) {
+static inline cv::Rect get_rect_adapt_landmark(cv::Mat& img, int input_w, int input_h, const float bbox[4], float lmk[10]) {
     int l, r, t, b;
     float r_w = input_w / (img.cols * 1.0);
     float r_h = input_h / (img.rows * 1.0);
@@ -107,7 +107,7 @@ static bool cmp(const decodeplugin::Detection& a, const decodeplugin::Detection&
     return a.class_confidence > b.class_confidence;
 }
 
-static inline void nms(std::vector<decodeplugin::Detection>& res, float *output, float nms_thresh = 0.4) {
+static inline void nms(std::vector<decodeplugin::Detection>& res,const float *output, float nms_thresh = 0.4) {
     std::vector<decodeplugin::Detection> dets;
     for (int i = 0; i < output[0]; i++) {
         if (output[15 * i + 1 + 4] <= 0.1) continue;

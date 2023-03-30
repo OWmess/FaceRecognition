@@ -17,13 +17,17 @@ class RetinaFace final:public TRTInfer{
 public:
     RetinaFace()=delete;
 
-    RetinaFace(int inputW,int inputH,int outputSize): TRTInfer(inputW,inputH,outputSize){
+    RetinaFace(std::string modelPath,int inputW,int inputH,int outputSize): TRTInfer(modelPath,inputW,inputH,outputSize){
 
     }
 
     ~RetinaFace()=default;
 
     void process() override;
+
+    float* preProcess(const cv::Mat& img,float** predata) override;
+
+    TRTInfer::StructRst postProcess(const float *prob) override;
 private:
     IActivationLayer* bottleneck(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, int inch, int outch, int stride, std::string lname);
 

@@ -221,7 +221,7 @@ ICudaEngine* ArcFace::createEngine(unsigned int maxBatchSize, IBuilder* builder,
     ICudaEngine* engine = builder->buildEngineWithConfig(*network, *config);
     std::cout << "Build engine successfully!" << std::endl;
 
-    // Don't need the network any more
+    // Don't need the network anymore
     network->destroy();
 
     // Release host memory
@@ -240,35 +240,6 @@ void ArcFace::process() {
     char *trtModelStream{nullptr};
     size_t size{0};
     loadModel(&trtModelStream,size);
-////    if (argc == 2 && std::string(argv[1]) == "-s") {
-////        IHostMemory* modelStream{nullptr};
-////        APIToModel(256, &modelStream);
-////        assert(modelStream != nullptr);
-////        std::ofstream p("arcface-r100.engine", std::ios::binary);
-////        if (!p) {
-////            std::cerr << "could not open plan output file" << std::endl;
-////            return;//TODO:待修改
-////        }
-////        p.write(reinterpret_cast<const char*>(modelStream->data()), modelStream->size());
-////        modelStream->destroy();
-////        return;//TODO:待修改
-////    } else if (argc == 2 && std::string(argv[1]) == "-d") {
-//        std::ifstream file(GET_PRJ_DIR()+"/models/arcface-r100.engine", std::ios::binary);
-//        if (file.good()) {
-//            file.seekg(0, file.end);
-//            size = file.tellg();
-//            file.seekg(0, file.beg);
-//            trtModelStream = new char[size];
-//            assert(trtModelStream);
-//            file.read(trtModelStream, size);
-//            file.close();
-//        }
-////    } else {
-////        std::cerr << "arguments not right!" << std::endl;
-////        std::cerr << "./arcface-r100 -s  // serialize model to plan file" << std::endl;
-////        std::cerr << "./arcface-r100 -d  // deserialize plan file and run inference" << std::endl;
-////        return;//TODO:待修改
-////    }
 
     // prepare input data ---------------------------
     static float* data=_dataPtr.get();

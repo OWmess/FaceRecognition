@@ -250,11 +250,13 @@ void RetinaFace::process() {
     IRuntime *runtime = createInferRuntime(gLogger);
     assert(runtime != nullptr);
     ICudaEngine *engine = runtime->deserializeCudaEngine(trtModelStream, size);
+    runtime->destroy();
     //ICudaEngine* engine = runtime->deserializeCudaEngine(trtModelStream, size, nullptr);
     assert(engine != nullptr);
-    IExecutionContext *context = engine->createExecutionContext();
-    assert(context != nullptr);
+    _context = engine->createExecutionContext();
+    assert(_context != nullptr);
     //从摄像头读取图像
+
     cv::VideoCapture capture(0);
     cv::Mat img=cv::imread("worlds-largest-selfie.jpg");
     while(true) {
@@ -291,7 +293,7 @@ void RetinaFace::process() {
 //            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "us"
 //                      << std::endl;
 //        }
-        doInference(*context, data, prob, BATCH_SIZE);
+        doInference(*_context, data, prob, BATCH_SIZE);
         cv::Mat showimg;
         for (int b = 0; b < BATCH_SIZE; b++) {
             std::vector<decodeplugin::Detection> res;
@@ -318,7 +320,7 @@ void RetinaFace::process() {
     }
 
     // Destroy the engine
-    context->destroy();
+    _context->destroy();
     engine->destroy();
     runtime->destroy();
 
@@ -331,4 +333,44 @@ void RetinaFace::process() {
     //}
     //std::cout << std::endl;
 
+}
+
+float *RetinaFace::preProcess(const cv::Mat &img, float **predata) {
+    float* &data=*predata;
+    cv::Mat pr_img = preprocess_img(img, INPUT_W, INPUT_H);
+    //cv::imwrite("preprocessed.jpg", pr_img);
+
+    // For multi-batch, I feed the same image multiple times.
+    // If you want to process different images in a batch, you need adapt it.
+    for (int b = 0; b < BATCH_SIZE; b++) {
+        float *p_data = &data[b * 3 * INPUT_H * INPUT_W];
+        for (int i = 0; i < INPUT_H * INPUT_W; i++) {
+            p_data[i] = pr_img.at<cv::Vec3b>(i)[0] - 104.0;
+            p_data[i + INPUT_H * INPUT_W] = pr_img.at<cv::Vec3b>(i)[1] - 117.0;
+            p_data[i + 2 * INPUT_H * INPUT_W] = pr_img.at<cv::Vec3b>(i)[2] - 123.0;
+        }
+    }
+    return data;
+}
+
+TRTInfer::StructRst RetinaFace::postProcess(const float *prob) {
+    StructRst result;
+    for (int b = 0; b < BATCH_SIZE; b++) {
+        std::vector<decodeplugin::Detection>& res=result.detector;
+        nms(res, &prob[b * OUTPUT_SIZE], IOU_THRESH);
+        std::cout << "number of detections -> " << prob[b * OUTPUT_SIZE] << std::endl;
+        std::cout << " -> " << prob[b * OUTPUT_SIZE + 10] << std::endl;
+        std::cout << "after nms -> " << res.size() << std::endl;
+
+        for(auto i=res.begin();i!=res.end();){
+
+            if(i->class_confidence<CONF_THRESH)
+                i=res.erase(i);
+            else
+                i++;
+
+        }
+
+    }
+    return result;
 }
