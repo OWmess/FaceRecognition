@@ -5,6 +5,7 @@
 #include <vector>
 #include <chrono>
 #include <opencv2/opencv.hpp>
+#include <cuda.h>
 #include "dirent.h"
 #include "NvInfer.h"
 #include "cuda_runtime_api.h"
@@ -207,7 +208,12 @@ ICudaEngine* ArcFace::createEngine(unsigned int maxBatchSize, IBuilder* builder,
 
     // Build engine
     builder->setMaxBatchSize(maxBatchSize);
-    config->setMaxWorkspaceSize(16 * (1 << 20));  // 16MB
+    size_t freeCuMem, totalCuMem;
+    cuMemGetInfo(&freeCuMem, &totalCuMem);
+    std::cout << "[INFO]: total gpu mem: " << (totalCuMem >> 20) << "MB, free gpu mem: " << (freeCuMem >> 20) << "MB"
+              << std::endl;
+    std::cout << "[INFO]: max workspace size will use all of free gpu mem" << std::endl;
+    config->setMaxWorkspaceSize(freeCuMem);
 #ifdef USE_FP16
     config->setFlag(BuilderFlag::kFP16);
 #endif
@@ -228,42 +234,41 @@ ICudaEngine* ArcFace::createEngine(unsigned int maxBatchSize, IBuilder* builder,
 }
 
 void ArcFace::process() {
-    int argc;char **argv;
 
     cudaSetDevice(DEVICE);
     // create a model using the API directly and serialize it to a stream
     char *trtModelStream{nullptr};
     size_t size{0};
-
-//    if (argc == 2 && std::string(argv[1]) == "-s") {
-//        IHostMemory* modelStream{nullptr};
-//        APIToModel(256, &modelStream);
-//        assert(modelStream != nullptr);
-//        std::ofstream p("arcface-r100.engine", std::ios::binary);
-//        if (!p) {
-//            std::cerr << "could not open plan output file" << std::endl;
-//            return;//TODO:待修改
+    loadModel(&trtModelStream,size);
+////    if (argc == 2 && std::string(argv[1]) == "-s") {
+////        IHostMemory* modelStream{nullptr};
+////        APIToModel(256, &modelStream);
+////        assert(modelStream != nullptr);
+////        std::ofstream p("arcface-r100.engine", std::ios::binary);
+////        if (!p) {
+////            std::cerr << "could not open plan output file" << std::endl;
+////            return;//TODO:待修改
+////        }
+////        p.write(reinterpret_cast<const char*>(modelStream->data()), modelStream->size());
+////        modelStream->destroy();
+////        return;//TODO:待修改
+////    } else if (argc == 2 && std::string(argv[1]) == "-d") {
+//        std::ifstream file(GET_PRJ_DIR()+"/models/arcface-r100.engine", std::ios::binary);
+//        if (file.good()) {
+//            file.seekg(0, file.end);
+//            size = file.tellg();
+//            file.seekg(0, file.beg);
+//            trtModelStream = new char[size];
+//            assert(trtModelStream);
+//            file.read(trtModelStream, size);
+//            file.close();
 //        }
-//        p.write(reinterpret_cast<const char*>(modelStream->data()), modelStream->size());
-//        modelStream->destroy();
-//        return;//TODO:待修改
-//    } else if (argc == 2 && std::string(argv[1]) == "-d") {
-        std::ifstream file(GET_PRJ_DIR()+"/models/arcface-r100.engine", std::ios::binary);
-        if (file.good()) {
-            file.seekg(0, file.end);
-            size = file.tellg();
-            file.seekg(0, file.beg);
-            trtModelStream = new char[size];
-            assert(trtModelStream);
-            file.read(trtModelStream, size);
-            file.close();
-        }
-//    } else {
-//        std::cerr << "arguments not right!" << std::endl;
-//        std::cerr << "./arcface-r100 -s  // serialize model to plan file" << std::endl;
-//        std::cerr << "./arcface-r100 -d  // deserialize plan file and run inference" << std::endl;
-//        return;//TODO:待修改
-//    }
+////    } else {
+////        std::cerr << "arguments not right!" << std::endl;
+////        std::cerr << "./arcface-r100 -s  // serialize model to plan file" << std::endl;
+////        std::cerr << "./arcface-r100 -d  // deserialize plan file and run inference" << std::endl;
+////        return;//TODO:待修改
+////    }
 
     // prepare input data ---------------------------
     static float* data=_dataPtr.get();

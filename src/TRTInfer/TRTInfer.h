@@ -102,7 +102,7 @@ public:
         cudaSetDevice(DEVICE);
         if(!fs::exists(cachePath)){
             if(!fs::exists(modelPath)) {
-                std::cerr << "Load model fail!" << std::endl;
+                std::cerr << "Load model fail,please check file path!" << std::endl;
                 exit(-1);
             }
             std::cout<<"prepare to build model engine..\nIt will takes a while..."<<std::endl;
@@ -111,8 +111,9 @@ public:
             assert(modelStream != nullptr);
 
             std::ofstream p(cachePath.generic_string(), std::ios::binary);
-            assert(!p);
+            assert(p);
             p.write(reinterpret_cast<const char *>(modelStream->data()), modelStream->size());
+            p.close();
             modelStream->destroy();
         }
 
