@@ -357,9 +357,9 @@ TRTInfer::StructRst RetinaFace::postProcess(float **postprob,int rows,int cols) 
     for (int b = 0; b < BATCH_SIZE; b++) {
         std::vector<decodeplugin::Detection>& res=result.detector;
         nms(res, &prob[b * OUTPUT_SIZE], IOU_THRESH);
-        std::cout << "number of detections -> " << prob[b * OUTPUT_SIZE] << std::endl;
-        std::cout << " -> " << prob[b * OUTPUT_SIZE + 10] << std::endl;
-        std::cout << "after nms -> " << res.size() << std::endl;
+//        std::cout << "number of detections -> " << prob[b * OUTPUT_SIZE] << std::endl;
+//        std::cout << " -> " << prob[b * OUTPUT_SIZE + 10] << std::endl;
+//        std::cout << "after nms -> " << res.size() << std::endl;
 
         for(auto i=res.begin();i!=res.end();){
 

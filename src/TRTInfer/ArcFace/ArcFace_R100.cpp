@@ -254,7 +254,7 @@ void ArcFace::process() {
     assert(context != nullptr);
     delete[] trtModelStream;
 
-    cv::Mat img = cv::imread("../joey0.ppm");
+    cv::Mat img = cv::imread("../pic0.jpg");
     for (int i = 0; i < INPUT_H * INPUT_W; i++) {
         data[i] = ((float)img.at<cv::Vec3b>(i)[2] - 127.5) * 0.0078125;
         data[i + INPUT_H * INPUT_W] = ((float)img.at<cv::Vec3b>(i)[1] - 127.5) * 0.0078125;
@@ -271,7 +271,7 @@ void ArcFace::process() {
     cv::Mat out_norm;
     cv::normalize(out, out_norm);
 
-    img = cv::imread("../joey1.ppm");
+    img = cv::imread("../pic1.jpg");
     for (int i = 0; i < INPUT_H * INPUT_W; i++) {
         data[i] = ((float)img.at<cv::Vec3b>(i)[2] - 127.5) * 0.0078125;
         data[i + INPUT_H * INPUT_W] = ((float)img.at<cv::Vec3b>(i)[1] - 127.5) * 0.0078125;
