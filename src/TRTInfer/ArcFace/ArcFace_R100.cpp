@@ -263,7 +263,7 @@ void ArcFace::process() {
 
     // Run inference
     auto start = std::chrono::system_clock::now();
-    doInference(*context, data, prob, BATCH_SIZE);
+    doInference(data, prob);
     auto end = std::chrono::system_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
@@ -280,7 +280,7 @@ void ArcFace::process() {
 
     // Run inference
     start = std::chrono::system_clock::now();
-    doInference(*context, data, prob, BATCH_SIZE);
+    doInference(data, prob);
     end = std::chrono::system_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
@@ -306,4 +306,22 @@ void ArcFace::process() {
     //}
     //std::cout << std::endl;
 
+}
+
+void ArcFace::preProcess(const cv::Mat &img, float **predata) {
+    float* &data=*predata;
+    for (int i = 0; i < INPUT_H * INPUT_W; i++) {
+        data[i] = ((float)img.at<cv::Vec3b>(i)[2] - 127.5) * 0.0078125;
+        data[i + INPUT_H * INPUT_W] = ((float)img.at<cv::Vec3b>(i)[1] - 127.5) * 0.0078125;
+        data[i + 2 * INPUT_H * INPUT_W] = ((float)img.at<cv::Vec3b>(i)[0] - 127.5) * 0.0078125;
+    }
+}
+
+TRTInfer::StructRst ArcFace::postProcess(float **prob,int rows,int cols) {
+    assert(rows!=0&&cols!=0);
+    StructRst result;
+    cv::Mat out(rows, cols, CV_32FC1, *prob);
+    cv::Mat out_norm;
+    cv::normalize(out, result.embedding);
+    return result;
 }

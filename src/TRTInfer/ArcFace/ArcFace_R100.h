@@ -10,7 +10,7 @@
 #include <map>
 #include "../TRTInfer.h"
 using namespace nvinfer1;
-class ArcFace final:public TRTInfer{
+class ArcFace final: public TRTInfer{
 
 public:
     ArcFace()=delete;
@@ -20,6 +20,10 @@ public:
     ~ArcFace()= default;
 
     void process() override;
+
+    void preProcess(const cv::Mat& img,float** predata) override;
+
+    StructRst postProcess(float **prob,int rows,int cols) override;
 private:
 
     IScaleLayer* addBatchNorm2d(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, std::string lname, float eps);

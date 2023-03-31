@@ -2,9 +2,11 @@
 // Created by q1162 on 2023/3/30.
 //
 #include "TRTInfer.h"
+
+#include <utility>
 #include "RetinaFace/common.hpp"
 
-TRTInfer::TRTInfer(std::string modelPath,int w,int h,int o):INPUT_W(w),INPUT_H(h),OUTPUT_SIZE(o),_modelPath(modelPath) {
+TRTInfer::TRTInfer(std::string modelPath,int w,int h,int o):INPUT_W(w),INPUT_H(h),OUTPUT_SIZE(o),_modelPath(std::move(modelPath)) {
     std::shared_ptr<float> a(new float[BATCH_SIZE * 3 * INPUT_H * INPUT_W]);
     std::shared_ptr<float> b(new float[BATCH_SIZE * OUTPUT_SIZE]);
     _dataPtr=std::move(a);
@@ -23,37 +25,39 @@ TRTInfer::TRTInfer(std::string modelPath,int w,int h,int o):INPUT_W(w),INPUT_H(h
     _context = engine->createExecutionContext();
     assert(_context != nullptr);
 
-}
-
-void TRTInfer::doInference(IExecutionContext& context, float* input, float* output, int batchSize) {
-    const ICudaEngine& engine = context.getEngine();
-
     // Pointers to input and output device buffers to pass to engine.
     // Engine requires exactly IEngine::getNbBindings() number of buffers.
-    assert(engine.getNbBindings() == 2);
-    void* buffers[2];
+    assert(engine->getNbBindings() == 2);
 
     // In order to bind the buffers, we need to know the names of the input and output tensors.
     // Note that indices are guaranteed to be less than IEngine::getNbBindings()
-    const int inputIndex = engine.getBindingIndex(INPUT_BLOB_NAME);
-    const int outputIndex = engine.getBindingIndex(OUTPUT_BLOB_NAME);
+    _inputIndex = engine->getBindingIndex(INPUT_BLOB_NAME);
+    _outputIndex = engine->getBindingIndex(OUTPUT_BLOB_NAME);
 
     // Create GPU buffers on device
-    CHECK(cudaMalloc(&buffers[inputIndex], batchSize * 3 * INPUT_H * INPUT_W * sizeof(float)));
-    CHECK(cudaMalloc(&buffers[outputIndex], batchSize * OUTPUT_SIZE * sizeof(float)));
+    CHECK(cudaMalloc(&_buffers[_inputIndex], _batchSize * 3 * INPUT_H * INPUT_W * sizeof(float)));
+    CHECK(cudaMalloc(&_buffers[_outputIndex], _batchSize * OUTPUT_SIZE * sizeof(float)));
 
     // Create stream
-
     CHECK(cudaStreamCreate(&_stream));
-    // DMA input batch data to device, infer on the batch asynchronously, and DMA output back to host
-    CHECK(cudaMemcpyAsync(buffers[inputIndex], input, batchSize * 3 * INPUT_H * INPUT_W * sizeof(float), cudaMemcpyHostToDevice, _stream));
-    context.enqueue(batchSize, buffers, _stream, nullptr);
-    CHECK(cudaMemcpyAsync(output, buffers[outputIndex], batchSize * OUTPUT_SIZE * sizeof(float), cudaMemcpyDeviceToHost, _stream));
-    cudaStreamSynchronize(_stream);
+
+}
+
+TRTInfer::~TRTInfer() {
     // Release stream and buffers
     cudaStreamDestroy(_stream);
-    CHECK(cudaFree(buffers[inputIndex]));
-    CHECK(cudaFree(buffers[outputIndex]));
+    CHECK(cudaFree(_buffers[_inputIndex]));
+    CHECK(cudaFree(_buffers[_outputIndex]));
+}
+
+void TRTInfer::doInference(float* input, float* output) {
+
+    // DMA input batch data to device, infer on the batch asynchronously, and DMA output back to host
+    CHECK(cudaMemcpyAsync(_buffers[_inputIndex], input, _batchSize * 3 * INPUT_H * INPUT_W * sizeof(float), cudaMemcpyHostToDevice, _stream));
+    _context->enqueue(_batchSize, _buffers, _stream, nullptr);
+    CHECK(cudaMemcpyAsync(output, _buffers[_outputIndex], _batchSize * OUTPUT_SIZE * sizeof(float), cudaMemcpyDeviceToHost, _stream));
+    cudaStreamSynchronize(_stream);
+
 }
 
 void TRTInfer::APIToModel(unsigned int maxBatchSize, IHostMemory** modelStream) {
@@ -115,20 +119,13 @@ void TRTInfer::loadModel(char** trtModelStream,size_t& size) {
 
 }
 
-TRTInfer::StructRst TRTInfer::infer(const cv::Mat& img) {
+TRTInfer::StructRst TRTInfer::infer(const cv::Mat &img,int rows,int cols) {
     static float* data=_dataPtr.get();
     static float* prob=_probPtr.get();
-
-    data=preProcess(img,&data);
-    doInference(*_context,data,prob,BATCH_SIZE);
-
-    return std::move(postProcess(prob));
+    preProcess(img,&data);
+    doInference(data,prob);
+    return std::move(postProcess(&prob,rows,cols));
 }
 
-float* TRTInfer::preProcess(const cv::Mat& img,float** predata) {
-    return nullptr;
-}
 
-TRTInfer::StructRst TRTInfer::postProcess(const float *prob) {
-    return TRTInfer::StructRst{};
-}
+

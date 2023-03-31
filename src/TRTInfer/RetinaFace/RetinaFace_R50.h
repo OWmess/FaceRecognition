@@ -13,7 +13,7 @@
 #include "NvInfer.h"
 #include "decode.h"
 #include "../TRTInfer.h"
-class RetinaFace final:public TRTInfer{
+class RetinaFace final: public TRTInfer{
 public:
     RetinaFace()=delete;
 
@@ -25,9 +25,9 @@ public:
 
     void process() override;
 
-    float* preProcess(const cv::Mat& img,float** predata) override;
+    void preProcess(const cv::Mat& img,float** predata) override;
 
-    TRTInfer::StructRst postProcess(const float *prob) override;
+    StructRst postProcess(float **prob,int rows,int cols) override;
 private:
     IActivationLayer* bottleneck(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, int inch, int outch, int stride, std::string lname);
 

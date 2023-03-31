@@ -293,7 +293,7 @@ void RetinaFace::process() {
 //            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "us"
 //                      << std::endl;
 //        }
-        doInference(*_context, data, prob, BATCH_SIZE);
+        doInference(data, prob);
         cv::Mat showimg;
         for (int b = 0; b < BATCH_SIZE; b++) {
             std::vector<decodeplugin::Detection> res;
@@ -335,11 +335,10 @@ void RetinaFace::process() {
 
 }
 
-float *RetinaFace::preProcess(const cv::Mat &img, float **predata) {
+void RetinaFace::preProcess(const cv::Mat &img, float **predata) {
     float* &data=*predata;
     cv::Mat pr_img = preprocess_img(img, INPUT_W, INPUT_H);
     //cv::imwrite("preprocessed.jpg", pr_img);
-
     // For multi-batch, I feed the same image multiple times.
     // If you want to process different images in a batch, you need adapt it.
     for (int b = 0; b < BATCH_SIZE; b++) {
@@ -350,11 +349,11 @@ float *RetinaFace::preProcess(const cv::Mat &img, float **predata) {
             p_data[i + 2 * INPUT_H * INPUT_W] = pr_img.at<cv::Vec3b>(i)[2] - 123.0;
         }
     }
-    return data;
 }
 
-TRTInfer::StructRst RetinaFace::postProcess(const float *prob) {
+TRTInfer::StructRst RetinaFace::postProcess(float **postprob,int rows,int cols) {
     StructRst result;
+    float* &prob=*postprob;
     for (int b = 0; b < BATCH_SIZE; b++) {
         std::vector<decodeplugin::Detection>& res=result.detector;
         nms(res, &prob[b * OUTPUT_SIZE], IOU_THRESH);

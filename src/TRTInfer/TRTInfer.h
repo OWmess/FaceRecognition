@@ -3,6 +3,7 @@
 //
 #ifndef FACERECOGNITION_TRTINFER_H
 #define FACERECOGNITION_TRTINFER_H
+
 #include <utility>
 #include "logging.h"
 #include "NvInfer.h"
@@ -12,6 +13,7 @@
 #include <filesystem>
 #include <fstream>
 #include <opencv2/opencv.hpp>
+
 #define CHECK(status) \
     do\
     {\
@@ -25,49 +27,50 @@
 
 using namespace nvinfer1;
 
-class TRTInfer{
+class TRTInfer {
 public:
-    struct StructRst{
+    struct StructRst {
         std::vector<decodeplugin::Detection> detector;
         cv::Mat embedding;
     };
-    TRTInfer()=delete;
 
-    TRTInfer(std::string modelPath,int w,int h,int o);
+    TRTInfer() = delete;
 
-    virtual ~TRTInfer()= default;
+    TRTInfer(std::string modelPath, int w, int h, int o);
 
-    virtual void process()=0;
+    virtual ~TRTInfer();
 
-    virtual ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder* builder, IBuilderConfig* config, DataType dt)=0;
+    virtual void process() = 0;
 
-    virtual float* preProcess(const cv::Mat& img,float** predata);
+    virtual ICudaEngine *
+    createEngine(unsigned int maxBatchSize, IBuilder *builder, IBuilderConfig *config, DataType dt) = 0;
 
-    virtual StructRst postProcess(const float* prob);
+    virtual void preProcess(const cv::Mat &img, float **predata) = 0;
 
+    virtual StructRst postProcess(float **prob,int rows=0,int cols=0) = 0;
 
-    void doInference(IExecutionContext& context, float* input, float* output, int batchSize);
+    void doInference(float *input, float *output);
 
-    void APIToModel(unsigned int maxBatchSize, IHostMemory** modelStream);
+    void APIToModel(unsigned int maxBatchSize, IHostMemory **modelStream);
 
-    void setModelPath(std::string str){
-        _modelPath=std::move(str);
-    }
+    void loadModel(char **trtModelStream, size_t &size);
 
-    void loadModel(char** trtModelStream,size_t& size);
+    StructRst infer(const cv::Mat &img,int rows=0,int cols=0);
 
-    StructRst infer(const cv::Mat& img);
 protected:
     Logger gLogger;
     // stuff we know about the network and the input/output blobs
-    int INPUT_H,INPUT_W,OUTPUT_SIZE;
-    const char* INPUT_BLOB_NAME = "data";
-    const char* OUTPUT_BLOB_NAME = "prob";
+    int INPUT_H, INPUT_W, OUTPUT_SIZE;
+    const char *INPUT_BLOB_NAME = "data";
+    const char *OUTPUT_BLOB_NAME = "prob";
     std::shared_ptr<float> _dataPtr;
     std::shared_ptr<float> _probPtr;
     std::string _modelPath;
     IExecutionContext *_context;
     cudaStream_t _stream;
+    int _inputIndex, _outputIndex;
+    const int _batchSize = BATCH_SIZE;
+    void *_buffers[2];
 };
 
 

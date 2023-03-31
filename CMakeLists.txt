@@ -3,8 +3,6 @@ set(CMAKE_CUDA_ARCHITECTURES 75)
 project(FaceRecognition CUDA)
 option(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_TYPE Debug)
-
 include_directories(${PROJECT_SOURCE_DIR}/include)
 #添加opencv
 find_package(OpenCV REQUIRED)
