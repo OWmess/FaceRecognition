@@ -8,7 +8,7 @@
 #include "../../config.h"
 #include "NvInfer.h"
 #include <map>
-#include "../TRTInfer.h"
+#include "../TRTInfer.hpp"
 using namespace nvinfer1;
 class ArcFace final: public TRTInfer{
 
@@ -24,6 +24,8 @@ public:
     void preProcess(const cv::Mat& img,float** predata) override;
 
     StructRst postProcess(float **prob,int rows,int cols) override;
+
+    ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder* builder, IBuilderConfig* config, DataType dt) override;
 private:
 
     IScaleLayer* addBatchNorm2d(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, std::string lname, float eps);
@@ -32,7 +34,7 @@ private:
 
     ILayer* resUnit(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, int num_filters, int s, bool dim_match, std::string lname);
 
-    ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder* builder, IBuilderConfig* config, DataType dt) override;
+
 
 
 private:

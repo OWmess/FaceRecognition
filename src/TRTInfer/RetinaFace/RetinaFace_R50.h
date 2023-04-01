@@ -12,7 +12,7 @@
 #include "dirent.h"
 #include "NvInfer.h"
 #include "decode.h"
-#include "../TRTInfer.h"
+#include "../TRTInfer.hpp"
 class RetinaFace final: public TRTInfer{
 public:
     RetinaFace()=delete;
@@ -28,14 +28,14 @@ public:
     void preProcess(const cv::Mat& img,float** predata) override;
 
     StructRst postProcess(float **prob,int rows,int cols) override;
+
+    virtual ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder* builder, IBuilderConfig* config, DataType dt) override;
 private:
     IActivationLayer* bottleneck(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, int inch, int outch, int stride, std::string lname);
 
     ILayer* conv_bn_relu(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, int outch, int kernelsize, int stride, int padding, bool userelu, std::string lname);
 
     IActivationLayer* ssh(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, std::string lname);
-
-    ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder* builder, IBuilderConfig* config, DataType dt) override;
 
 };
 #endif //FACERECOGNITION_RETINAFACE_R50_H

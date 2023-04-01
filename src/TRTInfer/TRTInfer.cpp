@@ -1,12 +1,13 @@
 //
 // Created by q1162 on 2023/3/30.
 //
-#include "TRTInfer.h"
+#include "TRTInfer.hpp"
 
 #include <utility>
 #include "RetinaFace/common.hpp"
 
 TRTInfer::TRTInfer(std::string modelPath,int w,int h,int o):INPUT_W(w),INPUT_H(h),OUTPUT_SIZE(o),_modelPath(std::move(modelPath)) {
+
     std::shared_ptr<float> a(new float[BATCH_SIZE * 3 * INPUT_H * INPUT_W]);
     std::shared_ptr<float> b(new float[BATCH_SIZE * OUTPUT_SIZE]);
     _dataPtr=std::move(a);
@@ -14,6 +15,7 @@ TRTInfer::TRTInfer(std::string modelPath,int w,int h,int o):INPUT_W(w),INPUT_H(h
 
     char *trtModelStream{nullptr};
     size_t size{0};
+
     loadModel(&trtModelStream,size);
     //build context
     IRuntime *runtime = createInferRuntime(gLogger);
@@ -80,6 +82,7 @@ void TRTInfer::APIToModel(unsigned int maxBatchSize, IHostMemory** modelStream) 
 
 void TRTInfer::loadModel(char** trtModelStream,size_t& size) {
     namespace fs = std::filesystem;
+
     fs::path modelPath(_modelPath);
     fs::path cachePath=modelPath;
     cachePath.replace_extension("engine");
@@ -92,6 +95,7 @@ void TRTInfer::loadModel(char** trtModelStream,size_t& size) {
         }
         std::cout<<"prepare to build model engine..\nIt will takes a while..."<<std::endl;
         IHostMemory *modelStream{nullptr};
+
         APIToModel(BATCH_SIZE, &modelStream);
         assert(modelStream != nullptr);
 
@@ -125,6 +129,11 @@ TRTInfer::StructRst TRTInfer::infer(const cv::Mat &img,int rows,int cols) {
     preProcess(img,&data);
     doInference(data,prob);
     return std::move(postProcess(&prob,rows,cols));
+}
+
+ICudaEngine *TRTInfer::createEngine(unsigned int maxBatchSize, IBuilder *builder, IBuilderConfig *config, DataType dt) {
+    std::cout<<"Running TRTInfer::createEngine"<<std::endl;
+    return nullptr;
 }
 
 

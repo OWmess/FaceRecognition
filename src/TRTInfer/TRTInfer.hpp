@@ -1,8 +1,8 @@
 //
 // Created by q1162 on 2023/3/28.
 //
-#ifndef FACERECOGNITION_TRTINFER_H
-#define FACERECOGNITION_TRTINFER_H
+#ifndef FACERECOGNITION_TRTINFER_HPP
+#define FACERECOGNITION_TRTINFER_HPP
 
 #include <utility>
 #include "logging.h"
@@ -42,8 +42,7 @@ public:
 
     virtual void process() = 0;
 
-    virtual ICudaEngine *
-    createEngine(unsigned int maxBatchSize, IBuilder *builder, IBuilderConfig *config, DataType dt) = 0;
+    virtual ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder *builder, IBuilderConfig *config, DataType dt)=0;
 
     virtual void preProcess(const cv::Mat &img, float **predata) = 0;
 
@@ -74,4 +73,4 @@ protected:
 };
 
 
-#endif //FACERECOGNITION_TRTINFER_H
+#endif //FACERECOGNITION_TRTINFER_HPP

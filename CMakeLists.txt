@@ -23,6 +23,6 @@ target_link_libraries(preluplugins nvinfer cudart)
 #
 file(GLOB_RECURSE SOURCE_FILES "${PROJECT_SOURCE_DIR}/Src/*.cpp")
 add_executable(${PROJECT_NAME} src/main.cpp ${SOURCE_FILES})
-target_link_libraries(${PROJECT_NAME} nvinfer cudart cuda preluplugins decodeplugin ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME} nvonnxparser nvinfer cudart cuda preluplugins decodeplugin ${OpenCV_LIBS})
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)
