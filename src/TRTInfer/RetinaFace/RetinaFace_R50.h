@@ -18,7 +18,7 @@ public:
     RetinaFace()=delete;
 
     RetinaFace(std::string modelPath,int inputW,int inputH,int outputSize): TRTInfer(modelPath,inputW,inputH,outputSize){
-
+        prepareModel();
     }
 
     ~RetinaFace()=default;

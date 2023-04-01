@@ -12,22 +12,17 @@ int main(int argc, char **argv) {
     static constexpr int w=80;
     static constexpr int h=80;
     static constexpr int o=3;
-//    std::unique_ptr<TRTInfer> AntiSpoofingPtr=std::make_unique<AntiSpoofing>(GET_PRJ_DIR() + "/models/AntiSpoofing.onnx",w,h,o);
-
-
-
-
-
+    std::unique_ptr<TRTInfer> AntiSpoofingPtr=std::make_unique<AntiSpoofing>(GET_PRJ_DIR() + "/models/AntiSpoofing.onnx",w,h,o);
 
 
 //
-    std::unique_ptr<TRTInfer> retinaFacePtr{
-            new RetinaFace(GET_PRJ_DIR() + "/models/retinaface.wts", MODELCONFIG::RETINAFACE::INPUT_W,
-                           MODELCONFIG::RETINAFACE::INPUT_H, MODELCONFIG::RETINAFACE::OUTPUT_SIZE)};
-    std::unique_ptr<TRTInfer> ArcFacePtr = std::make_unique<ArcFace>(GET_PRJ_DIR() + "/models/arcface-r100.wts",
-                                                                     MODELCONFIG::ARCFACE::INPUT_W,
-                                                                     MODELCONFIG::ARCFACE::INPUT_H,
-                                                                     MODELCONFIG::ARCFACE::OUTPUT_SIZE);
+//    std::unique_ptr<TRTInfer> retinaFacePtr{
+//            new RetinaFace(GET_PRJ_DIR() + "/models/retinaface.wts", MODELCONFIG::RETINAFACE::INPUT_W,
+//                           MODELCONFIG::RETINAFACE::INPUT_H, MODELCONFIG::RETINAFACE::OUTPUT_SIZE)};
+//    std::unique_ptr<TRTInfer> ArcFacePtr = std::make_unique<ArcFace>(GET_PRJ_DIR() + "/models/arcface-r100.wts",
+//                                                                     MODELCONFIG::ARCFACE::INPUT_W,
+//                                                                     MODELCONFIG::ARCFACE::INPUT_H,
+//                                                                     MODELCONFIG::ARCFACE::OUTPUT_SIZE);
 //    cv::VideoCapture capture(0);
 //    cv::Mat img;
 //    cv::Mat detectImg;

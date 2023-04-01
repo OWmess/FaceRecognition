@@ -42,6 +42,8 @@ public:
 
     virtual void process() = 0;
 
+    void prepareModel();
+    
     virtual ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder *builder, IBuilderConfig *config, DataType dt)=0;
 
     virtual void preProcess(const cv::Mat &img, float **predata) = 0;

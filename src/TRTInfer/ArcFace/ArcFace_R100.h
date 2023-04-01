@@ -15,7 +15,7 @@ class ArcFace final: public TRTInfer{
 public:
     ArcFace()=delete;
     ArcFace(std::string modelPath,int w,int h,int o):TRTInfer(modelPath,w,h,o){
-
+        prepareModel();
     }
     ~ArcFace()= default;
 

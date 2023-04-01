@@ -12,37 +12,6 @@ TRTInfer::TRTInfer(std::string modelPath,int w,int h,int o):INPUT_W(w),INPUT_H(h
     std::shared_ptr<float> b(new float[BATCH_SIZE * OUTPUT_SIZE]);
     _dataPtr=std::move(a);
     _probPtr=std::move(b);
-
-    char *trtModelStream{nullptr};
-    size_t size{0};
-
-    loadModel(&trtModelStream,size);
-    //build context
-    IRuntime *runtime = createInferRuntime(gLogger);
-    assert(runtime != nullptr);
-    ICudaEngine *engine = runtime->deserializeCudaEngine(trtModelStream, size);
-    runtime->destroy();
-    //ICudaEngine* engine = runtime->deserializeCudaEngine(trtModelStream, size, nullptr);
-    assert(engine != nullptr);
-    _context = engine->createExecutionContext();
-    assert(_context != nullptr);
-
-    // Pointers to input and output device buffers to pass to engine.
-    // Engine requires exactly IEngine::getNbBindings() number of buffers.
-    assert(engine->getNbBindings() == 2);
-
-    // In order to bind the buffers, we need to know the names of the input and output tensors.
-    // Note that indices are guaranteed to be less than IEngine::getNbBindings()
-    _inputIndex = engine->getBindingIndex(INPUT_BLOB_NAME);
-    _outputIndex = engine->getBindingIndex(OUTPUT_BLOB_NAME);
-
-    // Create GPU buffers on device
-    CHECK(cudaMalloc(&_buffers[_inputIndex], _batchSize * 3 * INPUT_H * INPUT_W * sizeof(float)));
-    CHECK(cudaMalloc(&_buffers[_outputIndex], _batchSize * OUTPUT_SIZE * sizeof(float)));
-
-    // Create stream
-    CHECK(cudaStreamCreate(&_stream));
-
 }
 
 TRTInfer::~TRTInfer() {
@@ -134,6 +103,38 @@ TRTInfer::StructRst TRTInfer::infer(const cv::Mat &img,int rows,int cols) {
 ICudaEngine *TRTInfer::createEngine(unsigned int maxBatchSize, IBuilder *builder, IBuilderConfig *config, DataType dt) {
     std::cout<<"Running TRTInfer::createEngine"<<std::endl;
     return nullptr;
+}
+
+void TRTInfer::prepareModel() {
+    char *trtModelStream{nullptr};
+    size_t size{0};
+
+    loadModel(&trtModelStream,size);
+    //build context
+    IRuntime *runtime = createInferRuntime(gLogger);
+    assert(runtime != nullptr);
+    ICudaEngine *engine = runtime->deserializeCudaEngine(trtModelStream, size);
+    runtime->destroy();
+    //ICudaEngine* engine = runtime->deserializeCudaEngine(trtModelStream, size, nullptr);
+    assert(engine != nullptr);
+    _context = engine->createExecutionContext();
+    assert(_context != nullptr);
+
+    // Pointers to input and output device buffers to pass to engine.
+    // Engine requires exactly IEngine::getNbBindings() number of buffers.
+    assert(engine->getNbBindings() == 2);
+
+    // In order to bind the buffers, we need to know the names of the input and output tensors.
+    // Note that indices are guaranteed to be less than IEngine::getNbBindings()
+    _inputIndex = engine->getBindingIndex(INPUT_BLOB_NAME);
+    _outputIndex = engine->getBindingIndex(OUTPUT_BLOB_NAME);
+
+    // Create GPU buffers on device
+    CHECK(cudaMalloc(&_buffers[_inputIndex], _batchSize * 3 * INPUT_H * INPUT_W * sizeof(float)));
+    CHECK(cudaMalloc(&_buffers[_outputIndex], _batchSize * OUTPUT_SIZE * sizeof(float)));
+
+    // Create stream
+    CHECK(cudaStreamCreate(&_stream));
 }
 
 

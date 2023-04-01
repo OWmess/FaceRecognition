@@ -12,7 +12,7 @@ class AntiSpoofing final: public TRTInfer{
 public:
     AntiSpoofing()=delete;
     AntiSpoofing(std::string modelPath,int w,int h,int o):TRTInfer(modelPath,w,h,o){
-
+        prepareModel();
     }
     ~AntiSpoofing()=default;
 
