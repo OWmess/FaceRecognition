@@ -29,9 +29,15 @@ using namespace nvinfer1;
 
 class TRTInfer {
 public:
+    struct AntiSpoof{
+        float antiSpoofConf;
+        bool isFake;
+    };
     struct StructRst {
         std::vector<decodeplugin::Detection> detector;
         cv::Mat embedding;
+        AntiSpoof antiSpoof;
+
     };
 
     TRTInfer() = delete;
@@ -50,13 +56,17 @@ public:
 
     virtual StructRst postProcess(float **prob,int rows=0,int cols=0) = 0;
 
-    void doInference(float *input, float *output);
+    virtual void doInference(float *input, float *output);
 
     void APIToModel(unsigned int maxBatchSize, IHostMemory **modelStream);
 
     void loadModel(char **trtModelStream, size_t &size);
 
-    StructRst infer(const cv::Mat &img,int rows=0,int cols=0);
+    virtual StructRst infer(const cv::Mat &img,int rows=0,int cols=0);
+
+    virtual StructRst infer(const cv::Mat &img,decodeplugin::Detection bbox,float thresh){
+        return StructRst{};
+    }
 
 protected:
     Logger gLogger;

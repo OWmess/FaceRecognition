@@ -13,9 +13,47 @@ int main(int argc, char **argv) {
     static constexpr int h=80;
     static constexpr int o=3;
     std::unique_ptr<TRTInfer> AntiSpoofingPtr=std::make_unique<AntiSpoofing>(GET_PRJ_DIR() + "/models/AntiSpoofing.onnx",w,h,o);
+    auto img=cv::imread(GET_PRJ_DIR() + "/models/fake.jpg");
+    AntiSpoofingPtr->infer(img);
+    std::unique_ptr<TRTInfer> retinaFacePtr{
+            new RetinaFace(GET_PRJ_DIR() + "/models/retinaface.wts", MODELCONFIG::RETINAFACE::INPUT_W,
+                           MODELCONFIG::RETINAFACE::INPUT_H, MODELCONFIG::RETINAFACE::OUTPUT_SIZE)};
+    cv::VideoCapture capture(0);
+    cv::Mat detectImg;
+    cv::Mat showImg;
+    while(1){
+        int key=cv::waitKey(20);
+        capture >> img;
+        //旋转图像
+        transpose(img, img);
+        flip(img, img, 0);
+
+        showImg=img.clone();
+        auto detectResult = retinaFacePtr->infer(img);
+
+        for (auto &i: detectResult.detector) {
+
+            cv::Rect r = get_rect_adapt_landmark(showImg, MODELCONFIG::RETINAFACE::INPUT_W,
+                                                 MODELCONFIG::RETINAFACE::INPUT_H,
+                                                 i.bbox, i.landmark);
+            makeRectSafe(r,MODELCONFIG::RETINAFACE::INPUT_W,MODELCONFIG::RETINAFACE::INPUT_H);
+            cv::rectangle(showImg, r, cv::Scalar(0x27, 0xC1, 0x36), 2);
+            //cv::putText(tmp, std::to_string((int)(res[j].class_confidence * 100)) + "%", cv::Point(r.x, r.y - 1), cv::FONT_HERSHEY_PLAIN, 1.2, cv::Scalar(0xFF, 0xFF, 0xFF), 1);
+            for (int k = 0; k < 10; k += 2) {
+                cv::circle(showImg, cv::Point(i.landmark[k], i.landmark[k + 1]), 1,
+                           cv::Scalar(255 * (k > 2), 255 * (k > 0 && k < 8), 255 * (k < 6)), 4);
+            }
+            auto antiRst=AntiSpoofingPtr->infer(img,i,ANTI_SPOOFING_THRESH).antiSpoof;
+            std::cout<<antiRst.isFake<<"  conf: "<<antiRst.antiSpoofConf<<std::endl;
+        }
+        cv::imshow("showimg",showImg);
 
 
-//
+    }
+
+
+
+
 //    std::unique_ptr<TRTInfer> retinaFacePtr{
 //            new RetinaFace(GET_PRJ_DIR() + "/models/retinaface.wts", MODELCONFIG::RETINAFACE::INPUT_W,
 //                           MODELCONFIG::RETINAFACE::INPUT_H, MODELCONFIG::RETINAFACE::OUTPUT_SIZE)};
@@ -31,8 +69,9 @@ int main(int argc, char **argv) {
 //    while(1) {
 //        int key=cv::waitKey(20);
 //        capture >> img;
-//        transpose(img, img);
-//        flip(img, img, 0);
+//        //旋转图像
+////        transpose(img, img);
+////        flip(img, img, 0);
 //        showImg=img.clone();
 //        auto detectResult = retinaFacePtr->infer(img);
 //

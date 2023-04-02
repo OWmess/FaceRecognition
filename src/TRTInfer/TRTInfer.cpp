@@ -22,10 +22,9 @@ TRTInfer::~TRTInfer() {
 }
 
 void TRTInfer::doInference(float* input, float* output) {
-
     // DMA input batch data to device, infer on the batch asynchronously, and DMA output back to host
     CHECK(cudaMemcpyAsync(_buffers[_inputIndex], input, _batchSize * 3 * INPUT_H * INPUT_W * sizeof(float), cudaMemcpyHostToDevice, _stream));
-    _context->enqueue(_batchSize, _buffers, _stream, nullptr);
+    _context->enqueue( _batchSize,_buffers, _stream, nullptr);
     CHECK(cudaMemcpyAsync(output, _buffers[_outputIndex], _batchSize * OUTPUT_SIZE * sizeof(float), cudaMemcpyDeviceToHost, _stream));
     cudaStreamSynchronize(_stream);
 
@@ -96,14 +95,12 @@ TRTInfer::StructRst TRTInfer::infer(const cv::Mat &img,int rows,int cols) {
     static float* data=_dataPtr.get();
     static float* prob=_probPtr.get();
     preProcess(img,&data);
+
     doInference(data,prob);
+
     return std::move(postProcess(&prob,rows,cols));
 }
 
-ICudaEngine *TRTInfer::createEngine(unsigned int maxBatchSize, IBuilder *builder, IBuilderConfig *config, DataType dt) {
-    std::cout<<"Running TRTInfer::createEngine"<<std::endl;
-    return nullptr;
-}
 
 void TRTInfer::prepareModel() {
     char *trtModelStream{nullptr};
@@ -126,6 +123,7 @@ void TRTInfer::prepareModel() {
 
     // In order to bind the buffers, we need to know the names of the input and output tensors.
     // Note that indices are guaranteed to be less than IEngine::getNbBindings()
+
     _inputIndex = engine->getBindingIndex(INPUT_BLOB_NAME);
     _outputIndex = engine->getBindingIndex(OUTPUT_BLOB_NAME);
 
