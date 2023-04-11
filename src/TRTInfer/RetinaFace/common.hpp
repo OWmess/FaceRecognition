@@ -5,7 +5,7 @@
 #include "NvInfer.h"
 #include "decode.h"
 #include <fstream>
-using namespace nvinfer1;
+//using namespace nvinfer1;
 
 #define CHECK(status) \
     do\
@@ -132,9 +132,9 @@ static inline void nms(std::vector<decodeplugin::Detection>& res,const float *ou
 // Load weights from files
 // TensorRT weight files have a simple space delimited format:
 // [type] [size] <data x size in hex>
-static inline std::map<std::string, Weights> loadWeights(const std::string file) {
+static inline std::map<std::string, nvinfer1::Weights> loadWeights(const std::string file) {
     std::cout << "Loading weights: " << file << std::endl;
-    std::map<std::string, Weights> weightMap;
+    std::map<std::string, nvinfer1::Weights> weightMap;
 
     // Open weights file
     std::ifstream input(file);
@@ -147,13 +147,13 @@ static inline std::map<std::string, Weights> loadWeights(const std::string file)
 
     while (count--)
     {
-        Weights wt{DataType::kFLOAT, nullptr, 0};
+        nvinfer1::Weights wt{nvinfer1::DataType::kFLOAT, nullptr, 0};
         uint32_t size;
 
         // Read name and type of blob
         std::string name;
         input >> name >> std::dec >> size;
-        wt.type = DataType::kFLOAT;
+        wt.type = nvinfer1::DataType::kFLOAT;
 
         // Load blob
         uint32_t* val = reinterpret_cast<uint32_t*>(malloc(sizeof(val) * size));
@@ -170,7 +170,7 @@ static inline std::map<std::string, Weights> loadWeights(const std::string file)
     return weightMap;
 }
 
-static inline Weights getWeights(std::map<std::string, Weights>& weightMap, std::string key) {
+static inline nvinfer1::Weights getWeights(std::map<std::string, nvinfer1::Weights>& weightMap, std::string key) {
     if (weightMap.count(key) != 1) {
         std::cerr << key << " not existed in weight map, fatal error!!!" << std::endl;
         exit(-1);
@@ -178,7 +178,7 @@ static inline Weights getWeights(std::map<std::string, Weights>& weightMap, std:
     return weightMap[key];
 }
 
-static inline IScaleLayer* addBatchNorm2d(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, std::string lname, float eps) {
+static inline nvinfer1::IScaleLayer* addBatchNorm2d(nvinfer1::INetworkDefinition *network, std::map<std::string, nvinfer1::Weights>& weightMap, nvinfer1::ITensor& input, std::string lname, float eps) {
     float *gamma = (float*)weightMap[lname + ".weight"].values;
     float *beta = (float*)weightMap[lname + ".bias"].values;
     float *mean = (float*)weightMap[lname + ".running_mean"].values;
@@ -189,24 +189,24 @@ static inline IScaleLayer* addBatchNorm2d(INetworkDefinition *network, std::map<
     for (int i = 0; i < len; i++) {
         scval[i] = gamma[i] / sqrt(var[i] + eps);
     }
-    Weights scale{DataType::kFLOAT, scval, len};
+    nvinfer1::Weights scale{nvinfer1::DataType::kFLOAT, scval, len};
     
     float *shval = reinterpret_cast<float*>(malloc(sizeof(float) * len));
     for (int i = 0; i < len; i++) {
         shval[i] = beta[i] - mean[i] * gamma[i] / sqrt(var[i] + eps);
     }
-    Weights shift{DataType::kFLOAT, shval, len};
+    nvinfer1::Weights shift{nvinfer1::DataType::kFLOAT, shval, len};
 
     float *pval = reinterpret_cast<float*>(malloc(sizeof(float) * len));
     for (int i = 0; i < len; i++) {
         pval[i] = 1.0;
     }
-    Weights power{DataType::kFLOAT, pval, len};
+    nvinfer1::Weights power{nvinfer1::DataType::kFLOAT, pval, len};
 
     weightMap[lname + ".scale"] = scale;
     weightMap[lname + ".shift"] = shift;
     weightMap[lname + ".power"] = power;
-    IScaleLayer* scale_1 = network->addScale(input, ScaleMode::kCHANNEL, shift, scale, power);
+    nvinfer1::IScaleLayer* scale_1 = network->addScale(input, nvinfer1::ScaleMode::kCHANNEL, shift, scale, power);
     assert(scale_1);
     return scale_1;
 }

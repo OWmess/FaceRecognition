@@ -7,13 +7,15 @@
 
 #include "../../config.h"
 #include "logging.h"
+#include "NvInfer.h"
+#include "../TRTInfer.hpp"
 #include "common.hpp"
 #include <opencv2/opencv.hpp>
-#include "dirent.h"
-#include "NvInfer.h"
+//#include "dirent.h"
+
 #include "decode.h"
-#include "../TRTInfer.hpp"
-class RetinaFace final: public TRTInfer{
+
+class __declspec(dllexport) RetinaFace final: public TRTInfer{
 public:
     RetinaFace()=delete;
 
@@ -29,13 +31,13 @@ public:
 
     StructRst postProcess(float **prob,int rows,int cols) override;
 
-    virtual ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder* builder, IBuilderConfig* config, DataType dt) override;
+    virtual nvinfer1::ICudaEngine* createEngine(unsigned int maxBatchSize, nvinfer1::IBuilder* builder, nvinfer1::IBuilderConfig* config, nvinfer1::DataType dt) override;
 private:
-    IActivationLayer* bottleneck(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, int inch, int outch, int stride, std::string lname);
+    nvinfer1::IActivationLayer* bottleneck(nvinfer1::INetworkDefinition *network, std::map<std::string, nvinfer1::Weights>& weightMap, nvinfer1::ITensor& input, int inch, int outch, int stride, std::string lname);
 
-    ILayer* conv_bn_relu(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, int outch, int kernelsize, int stride, int padding, bool userelu, std::string lname);
+    nvinfer1::ILayer* conv_bn_relu(nvinfer1::INetworkDefinition *network, std::map<std::string, nvinfer1::Weights>& weightMap, nvinfer1::ITensor& input, int outch, int kernelsize, int stride, int padding, bool userelu, std::string lname);
 
-    IActivationLayer* ssh(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, std::string lname);
+    nvinfer1::IActivationLayer* ssh(nvinfer1::INetworkDefinition *network, std::map<std::string, nvinfer1::Weights>& weightMap, nvinfer1::ITensor& input, std::string lname);
 
 };
 #endif //FACERECOGNITION_RETINAFACE_R50_H

@@ -11,7 +11,7 @@
 #include "calibrator.h"
 #include "opencv2/opencv.hpp"
 #include "RetinaFace_R50.h"
-
+using namespace nvinfer1;
 IActivationLayer* RetinaFace::bottleneck(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, int inch, int outch, int stride, std::string lname) {
     Weights emptywts{DataType::kFLOAT, nullptr, 0};
 

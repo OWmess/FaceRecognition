@@ -25,11 +25,11 @@
         }\
     } while (0)
 
-using namespace nvinfer1;
 
-class TRTInfer {
+class __declspec(dllexport) TRTInfer {
+
 public:
-    struct AntiSpoof{
+    struct AntiSpoof {
         float antiSpoofConf;
         bool isFake;
     };
@@ -49,22 +49,23 @@ public:
     virtual void process() = 0;
 
     void prepareModel();
-    
-    virtual ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder *builder, IBuilderConfig *config, DataType dt)=0;
+
+    virtual nvinfer1::ICudaEngine *
+    createEngine(unsigned int maxBatchSize, nvinfer1::IBuilder *builder, nvinfer1::IBuilderConfig *config, nvinfer1::DataType dt) = 0;
 
     virtual void preProcess(const cv::Mat &img, float **predata) = 0;
 
-    virtual StructRst postProcess(float **prob,int rows=0,int cols=0) = 0;
+    virtual StructRst postProcess(float **prob, int rows = 0, int cols = 0) = 0;
 
     virtual void doInference(float *input, float *output);
 
-    void APIToModel(unsigned int maxBatchSize, IHostMemory **modelStream);
+    void APIToModel(unsigned int maxBatchSize, nvinfer1::IHostMemory **modelStream);
 
     void loadModel(char **trtModelStream, size_t &size);
 
-    virtual StructRst infer(const cv::Mat &img,int rows=0,int cols=0);
+    virtual StructRst infer(const cv::Mat &img, int rows = 0, int cols = 0);
 
-    virtual StructRst infer(const cv::Mat &img,decodeplugin::Detection bbox,float thresh){
+    virtual StructRst infer(const cv::Mat &img, decodeplugin::Detection bbox, float thresh) {
         return StructRst{};
     }
 
@@ -77,7 +78,7 @@ protected:
     std::shared_ptr<float> _dataPtr;
     std::shared_ptr<float> _probPtr;
     std::string _modelPath;
-    IExecutionContext *_context;
+    nvinfer1::IExecutionContext *_context;
     cudaStream_t _stream;
     int _inputIndex, _outputIndex;
     const int _batchSize = BATCH_SIZE;

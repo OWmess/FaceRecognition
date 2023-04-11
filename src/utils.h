@@ -33,5 +33,22 @@ inline bool makeRectSafe(cv::Rect& rect,int w,int h){
     return !(rect.width <= 0 || rect.height <= 0);
 }
 
+inline float calFrameFps() {
+    //frameFps_ = 0;
+    static float frameFps=0;
+    static int frameCount = 0;
+    static double lastTime = (double) cv::getTickCount() / cv::getTickFrequency() * 1000; // ms
+
+    ++frameCount;
+
+    if (frameCount >= 20) // 取固定帧数为100帧
+    {
+        double curTime = (double) cv::getTickCount() / cv::getTickFrequency() * 1000.f;
+        frameFps = frameCount / (curTime - lastTime) * 1000.f;
+        lastTime = curTime;
+        frameCount = 0;
+    }
+    return frameFps;
+}
 
 #endif //FACERECOGNITION_UTILS_H

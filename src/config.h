@@ -6,15 +6,15 @@
 #define FACERECOGNITION_CONFIG_H
 
 #define PRJ_NAME "FaceRecognition"
-#define USE_FP16  // comment out this if want to use FP32
-#define DEVICE 0  // GPU id
-#define BATCH_SIZE 1  // currently, only support BATCH=1
+#define USE_FP16
+#define DEVICE 0
+#define BATCH_SIZE 1
 #define CONF_THRESH 0.75
 #define IOU_THRESH 0.4
 #define SAVE_FORMAT 512,1
 #define INFER_FORMAT 1,512
 #define ANTI_SPOOFING_SCALE 4.0
-#define ANTI_SPOOFING_THRESH 0.8
+#define ANTI_SPOOFING_THRESH 0.75
 namespace MODELCONFIG{
     class ARCFACE{
     public:
@@ -29,6 +29,7 @@ namespace MODELCONFIG{
         static constexpr int OUTPUT_SIZE=(INPUT_H / 8 * INPUT_W / 8 + INPUT_H / 16 * INPUT_W / 16 +INPUT_H / 32 * INPUT_W / 32) * 2  * 15 + 1;
     };
     class ANTISPOOLING{
+    public:
         static constexpr int INPUT_W=80;
         static constexpr int INPUT_H=80;
         static constexpr int OUTPUTSIZE=3;

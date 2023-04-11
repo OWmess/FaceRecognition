@@ -7,8 +7,7 @@
 #include <utility>
 
 #include "../TRTInfer.hpp"
-using namespace nvinfer1;
-class AntiSpoofing final: public TRTInfer{
+class __declspec(dllexport) AntiSpoofing final: public TRTInfer{
 public:
     AntiSpoofing()=delete;
     AntiSpoofing(std::string modelPath,int w,int h,int o);
@@ -24,7 +23,7 @@ public:
 
     virtual StructRst infer(const cv::Mat &img,int rows=0,int cols=0) override;
 private:
-    ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder* builder, IBuilderConfig* config, DataType dt) override;
+    nvinfer1::ICudaEngine* createEngine(unsigned int maxBatchSize, nvinfer1::IBuilder* builder, nvinfer1::IBuilderConfig* config, nvinfer1::DataType dt) override;
 
     void doInference(float* input, float* output) override;
 

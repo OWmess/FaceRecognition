@@ -24,7 +24,7 @@
         }\
     } while (0)
 
-
+using namespace nvinfer1;
 IScaleLayer* ArcFace::addBatchNorm2d(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, std::string lname, float eps) {
     float *gamma = (float*)weightMap[lname + "_gamma"].values;
     float *beta = (float*)weightMap[lname + "_beta"].values;

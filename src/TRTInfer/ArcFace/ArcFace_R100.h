@@ -9,9 +9,8 @@
 #include "NvInfer.h"
 #include <map>
 #include "../TRTInfer.hpp"
-using namespace nvinfer1;
-class ArcFace final: public TRTInfer{
 
+class __declspec(dllexport) ArcFace final: public TRTInfer{
 public:
     ArcFace()=delete;
     ArcFace(std::string modelPath,int w,int h,int o):TRTInfer(modelPath,w,h,o){
@@ -25,14 +24,14 @@ public:
 
     StructRst postProcess(float **prob,int rows,int cols) override;
 
-    ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder* builder, IBuilderConfig* config, DataType dt) override;
+    nvinfer1::ICudaEngine* createEngine(unsigned int maxBatchSize, nvinfer1::IBuilder* builder, nvinfer1::IBuilderConfig* config, nvinfer1::DataType dt) override;
 private:
 
-    IScaleLayer* addBatchNorm2d(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, std::string lname, float eps);
+    nvinfer1::IScaleLayer* addBatchNorm2d(nvinfer1::INetworkDefinition *network, std::map<std::string, nvinfer1::Weights>& weightMap, nvinfer1::ITensor& input, std::string lname, float eps);
 
-    ILayer* addPRelu(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, std::string lname);
+    nvinfer1::ILayer* addPRelu(nvinfer1::INetworkDefinition *network, std::map<std::string, nvinfer1::Weights>& weightMap, nvinfer1::ITensor& input, std::string lname);
 
-    ILayer* resUnit(INetworkDefinition *network, std::map<std::string, Weights>& weightMap, ITensor& input, int num_filters, int s, bool dim_match, std::string lname);
+    nvinfer1::ILayer* resUnit(nvinfer1::INetworkDefinition *network, std::map<std::string, nvinfer1::Weights>& weightMap, nvinfer1::ITensor& input, int num_filters, int s, bool dim_match, std::string lname);
 
 
 

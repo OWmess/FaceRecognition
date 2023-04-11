@@ -6,6 +6,7 @@
 #include <NvOnnxParser.h>
 #include <cuda.h>
 
+using namespace nvinfer1;
 inline void softmax(std::vector<float>& t){
     float total=0;
     for(int i=0;i<3;i++)
@@ -30,7 +31,7 @@ ICudaEngine* AntiSpoofing::createEngine(unsigned int maxBatchSize, IBuilder* bui
     assert(parsingSuccess==true);
 
 #ifdef USE_FP16
-//    config->setFlag(BuilderFlag::kFP16);
+    config->setFlag(BuilderFlag::kFP16);
 #endif
     auto profile=builder->createOptimizationProfile();
     profile->setDimensions(INPUT_BLOB_NAME,OptProfileSelector::kMIN,Dims4{1,3,80,80});
@@ -125,7 +126,9 @@ cv::Mat AntiSpoofing::getRoi(const cv::Mat &src, float bbox[], float scale) {
         lt.y-=rb.y-src.size().height+1;
         rb.y=src.size().height-1;
     }
-    cv::Mat roi=src({lt,rb});
+    cv::Rect rect={lt,rb};
+    makeRectSafe(rect,src.size().width,src.size().height);
+    cv::Mat roi=src(rect);
     cv::resize(roi,roi,{INPUT_W,INPUT_H});
     return roi;
 }

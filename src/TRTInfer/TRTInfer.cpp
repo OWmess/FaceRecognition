@@ -6,6 +6,7 @@
 #include <utility>
 #include "RetinaFace/common.hpp"
 
+using namespace nvinfer1;
 TRTInfer::TRTInfer(std::string modelPath,int w,int h,int o):INPUT_W(w),INPUT_H(h),OUTPUT_SIZE(o),_modelPath(std::move(modelPath)) {
 
     std::shared_ptr<float> a(new float[BATCH_SIZE * 3 * INPUT_H * INPUT_W]);
