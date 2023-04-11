@@ -15,6 +15,7 @@
 #define INFER_FORMAT 1,512
 #define ANTI_SPOOFING_SCALE 4.0
 #define ANTI_SPOOFING_THRESH 0.75
+#define ENABLE_ANTI 0
 namespace MODELCONFIG{
     class ARCFACE{
     public:

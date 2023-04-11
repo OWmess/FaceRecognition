@@ -16,6 +16,8 @@ void CameraThread::run()
 {
     while (!isInterruptionRequested()) {
         _camera.read(_frame);
+        cv::transpose(_frame, _frame);
+        cv::flip(_frame, _frame, 0);
         emit imageReady(_frame);
     }
 }
@@ -53,13 +55,15 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
     cameraThread.start();
     displayThread.start();
     handleThread.start();
     connect(&cameraThread, SIGNAL(imageReady(cv::Mat)), &handleThread, SLOT(updateFrame(cv::Mat)));
     connect(&handleThread, SIGNAL(handleReady(cv::Mat)),&displayThread, SLOT(updateImage(cv::Mat)));
     connect(&displayThread, SIGNAL(sendImage(QPixmap)), ui->label, SLOT(setPixmap(QPixmap)));
+    connect(ui->appendAction, SIGNAL(triggered()),this,SLOT(faceAppendSlot()));
+    connect(ui->deleteAction, SIGNAL(triggered()),this,SLOT(faceDeleteSlot()));
+    connect(ui->detectAction, SIGNAL(triggered()),this,SLOT(detectSlot()));
 }
 
 MainWindow::~MainWindow()

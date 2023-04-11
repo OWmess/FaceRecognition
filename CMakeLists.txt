@@ -51,6 +51,7 @@ set(PROJECT_FILE
         ${PROJECT_SOURCE_DIR}/src/UI/mainwindow.cpp
         ${PROJECT_SOURCE_DIR}/src/UI/mainwindow.h
         ${PROJECT_SOURCE_DIR}/src/UI/mainwindow.ui
+        src/UI/facedialog.h src/UI/facedialog.cpp src/UI/facedialog.ui
         )
 #file(GLOB_RECURSE SOURCE_FILES "${PROJECT_SOURCE_DIR}/src/UI/.cpp")
 #file(GLOB_RECURSE UI_FILES "${PROJECT_SOURCE_DIR}/src/UI/*.ui")

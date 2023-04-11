@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>人脸识别与比对系统</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QLabel" name="label">
@@ -43,23 +43,41 @@
      <x>0</x>
      <y>0</y>
      <width>640</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
-   <widget class="QMenu" name="appendface">
+   <widget class="QMenu" name="faceMenu">
     <property name="title">
-     <string>添加人脸</string>
+     <string>人脸库</string>
     </property>
+    <addaction name="appendAction"/>
+    <addaction name="deleteAction"/>
    </widget>
-   <widget class="QMenu" name="imagedetect">
+   <widget class="QMenu" name="detectMenu">
     <property name="title">
      <string>图片识别</string>
     </property>
+    <addaction name="detectAction"/>
    </widget>
-   <addaction name="appendface"/>
-   <addaction name="imagedetect"/>
+   <addaction name="faceMenu"/>
+   <addaction name="detectMenu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="appendAction">
+   <property name="text">
+    <string>添加</string>
+   </property>
+  </action>
+  <action name="detectAction">
+   <property name="text">
+    <string>识别</string>
+   </property>
+  </action>
+  <action name="deleteAction">
+   <property name="text">
+    <string>删除</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
