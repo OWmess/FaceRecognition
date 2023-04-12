@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
+#include "../config.h"
 CameraThread::CameraThread(QObject *parent)
     : QThread(parent)
 {
@@ -16,8 +16,10 @@ void CameraThread::run()
 {
     while (!isInterruptionRequested()) {
         _camera.read(_frame);
+#if ROTATE_CAMERA
         cv::transpose(_frame, _frame);
         cv::flip(_frame, _frame, 0);
+#endif
         emit imageReady(_frame);
     }
 }

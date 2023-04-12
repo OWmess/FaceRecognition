@@ -16,6 +16,7 @@
 #define ANTI_SPOOFING_SCALE 4.0
 #define ANTI_SPOOFING_THRESH 0.75
 #define ENABLE_ANTI 0
+#define ROTATE_CAMERA 0
 namespace MODELCONFIG{
     class ARCFACE{
     public:

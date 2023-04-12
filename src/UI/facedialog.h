@@ -15,8 +15,15 @@ public:
     explicit FaceDialog(bool mode,QWidget *parent = nullptr);
     ~FaceDialog();
 
+signals:
+    void updateData(bool mode,QString id,QString name);
+
+private slots:
+    void accpetSlot();
+
 private:
     Ui::FaceDialog *ui;
+    //true为添加人脸
     bool mode;
 };
 

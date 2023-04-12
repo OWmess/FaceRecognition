@@ -52,7 +52,7 @@ set(PROJECT_FILE
         ${PROJECT_SOURCE_DIR}/src/UI/mainwindow.h
         ${PROJECT_SOURCE_DIR}/src/UI/mainwindow.ui
         src/UI/facedialog.h src/UI/facedialog.cpp src/UI/facedialog.ui
-        )
+        src/FileManager.hpp src/UI/ErrorMsg.hpp)
 #file(GLOB_RECURSE SOURCE_FILES "${PROJECT_SOURCE_DIR}/src/UI/.cpp")
 #file(GLOB_RECURSE UI_FILES "${PROJECT_SOURCE_DIR}/src/UI/*.ui")
 #if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
