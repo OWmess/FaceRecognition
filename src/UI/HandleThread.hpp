@@ -19,24 +19,12 @@ public:
 
     ~HandleThread();
 
-    [[nodiscard]] std::shared_ptr<TRTInfer> getAntiSpoofingPtr() const{
-        return _antiSpoofingPtr;
-    }
-
-    [[nodiscard]] std::shared_ptr<TRTInfer> getRetinaFace() const{
-        return _retinaFacePtr;
-    }
-
-    [[nodiscard]] std::shared_ptr<TRTInfer> getArcFace() const{
-        return _arcFacePtr;
-    }
-
-
 signals:
 
-    void handleReady(cv::Mat image);
+    void handleReady(const cv::Mat &image,QString);
 
     void detectorEmpty();
+
 public slots:
 
     void updateFrame(const cv::Mat &img);
@@ -52,14 +40,15 @@ private:
     bool _newImage;
     bool _saveMode;
     QString _appendId;
+    QString _appendName;
     std::vector<cv::Mat> norm;
-    std::shared_ptr<TRTInfer> _antiSpoofingPtr = std::make_shared<AntiSpoofing>(
+    std::unique_ptr<TRTInfer> _antiSpoofingPtr = std::make_unique<AntiSpoofing>(
             GET_PRJ_DIR() + "/models/AntiSpoofing.onnx", MODELCONFIG::ANTISPOOLING::INPUT_W,
             MODELCONFIG::ANTISPOOLING::INPUT_H, MODELCONFIG::ANTISPOOLING::OUTPUTSIZE);
-    std::shared_ptr<TRTInfer> _retinaFacePtr{
+    std::unique_ptr<TRTInfer> _retinaFacePtr{
             new RetinaFace(GET_PRJ_DIR() + "/models/retinaface.wts", MODELCONFIG::RETINAFACE::INPUT_W,
                            MODELCONFIG::RETINAFACE::INPUT_H, MODELCONFIG::RETINAFACE::OUTPUT_SIZE)};
-    std::shared_ptr<TRTInfer> _arcFacePtr = std::make_shared<ArcFace>(GET_PRJ_DIR() + "/models/arcface-r100.wts",
+    std::unique_ptr<TRTInfer> _arcFacePtr = std::make_unique<ArcFace>(GET_PRJ_DIR() + "/models/arcface-r100.wts",
                                                                       MODELCONFIG::ARCFACE::INPUT_W,
                                                                       MODELCONFIG::ARCFACE::INPUT_H,
                                                                       MODELCONFIG::ARCFACE::OUTPUT_SIZE);

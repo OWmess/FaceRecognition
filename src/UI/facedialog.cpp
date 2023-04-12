@@ -28,16 +28,15 @@ void FaceDialog::accpetSlot() {
     auto name=ui->nameEdit->text();
     auto &fm=FileManager::getInstance();
     if(mode==true){
-        if(fm.getFaceData().count(id.toStdString()))
+        if(fm.getFaceData().count({id.toStdString(),name.toStdString()}))
             errorMsg(id+","+name+" 已存在",this);
         else
             emit updateData(mode,id,name);
     }else{
-        if(!fm.getFaceData().count(id.toStdString()))
+        if(!fm.getFaceData().count({id.toStdString(),name.toStdString()}))
             errorMsg(id+","+name+" 不存在",this);
         else{
-            auto iter=fm.getFaceData().find(id.toStdString());
-            fm.getFaceData().erase(iter);
+            fm.eraseFace(id.toStdString());
         }
     }
 }

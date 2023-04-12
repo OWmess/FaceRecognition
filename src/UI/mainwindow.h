@@ -42,9 +42,10 @@ public:
     ~DisplayThread();
 
 public slots:
-    void updateImage(cv::Mat image);
+    void updateImage(const cv::Mat& image,QString str);
 
 signals:
+    void sendNameStr(QString);
     void sendImage(QPixmap image);
 
 protected:
@@ -53,6 +54,7 @@ protected:
 private:
     cv::Mat image;
     bool newImage;
+    QString nameStr;
 };
 
 class MainWindow : public QMainWindow
@@ -79,6 +81,11 @@ public slots:
     void detectSlot(){
         QStringList filesPath = QFileDialog::getOpenFileNames(this, tr("选择图片"), QDir::homePath(), tr("Image Files(*.png *.jpg *.bmp);;All Files (*.*)"));
         if (!filesPath.isEmpty()) {
+            for(const auto& i:filesPath.toVector()){
+                cv::Mat img=cv::imread(i.toStdString());
+
+            }
+
 
             // 处理所选文件的路径
         }
@@ -89,6 +96,7 @@ public slots:
         qDebug()<<"未检测到人脸"<<Qt::endl;
         errorMsg("未检测到人脸",this);
     }
+
 private:
     std::unique_ptr<FaceDialog> dialog = std::make_unique<FaceDialog>(false,this);
     Ui::MainWindow *ui;

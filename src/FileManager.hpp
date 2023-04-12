@@ -7,7 +7,15 @@
 #include <iostream>
 #include <filesystem>
 #include "utils.h"
-using FaceMap=std::map<std::string,cv::Mat>;
+class FaceInfo{
+public:
+    std::string id;
+    std::string name;
+    bool operator<(const FaceInfo& other) const{
+        return this->id<other.id;
+    }
+};
+using FaceMap=std::map<FaceInfo,cv::Mat>;
 class FileManager {
 public:
     static FileManager& getInstance() {
@@ -26,6 +34,24 @@ public:
 
     FaceMap& getFaceData(){
         return _faceData;
+    }
+
+    std::string getSaveDir(){
+        return _saveDir;
+    }
+
+    void eraseFace(const std::string& id){
+        auto iter=std::find_if(_faceData.begin(),_faceData.end(),[&](const auto& pair){
+            return id==pair.first.id;
+        });
+        _faceData.erase(iter);
+        auto deletePath=_saveDir+id+".jpg";
+        std::filesystem::remove(deletePath);
+    }
+
+    void appendFace(const FaceInfo& info, const cv::Mat& norm){
+        _faceData.insert(std::make_pair(info, norm));
+
     }
     FileManager(const FileManager&) = delete;
     FileManager& operator=(const FileManager&) = delete;

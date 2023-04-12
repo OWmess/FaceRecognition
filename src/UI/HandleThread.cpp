@@ -20,9 +20,10 @@ void HandleThread::updateFrame(const cv::Mat &img) {
 void HandleThread::run() {
 
     cv::Mat showImg;
-    std::vector<cv::Mat> norm;
+    auto &fm=FileManager::getInstance();
     while (!isInterruptionRequested()) {
         if (_newImage) {
+            QString nameStr;
             showImg = _frame.clone();
             if(_saveMode){
                 auto norm=appendProcess(_frame,showImg,SAVE_FORMAT);
@@ -31,16 +32,29 @@ void HandleThread::run() {
                     _saveMode=false;
                     continue;
                 }
-                auto &fm=FileManager::getInstance();
-                fm.getFaceData().insert(std::make_pair(_appendId.toStdString(),norm));
+
+                fm.appendFace({_appendId.toStdString(),_appendName.toStdString()},norm);
+                auto savedir=fm.getSaveDir()+_appendId.toStdString()+".jpg";
+                cv::imwrite(savedir,_frame);
                 _saveMode=false;
 
             }else{
+                auto normvec=process(_frame,showImg,INFER_FORMAT);
+                for(const auto& norm:normvec) {
+                    std::for_each(fm.getFaceData().begin(), fm.getFaceData().end(), [&](const auto &pair) {
+                        cv::Mat res=norm*pair.second;
+                        float score=*(float*)res.data;
+                        if(score>CONTRAST_THRESH){
+                            nameStr+=" "+pair.first.name;
+                            std::cout<<pair.first.name<<" conf: "<<score<<std::endl;
+                        }
+                        return;
+                    });
+                }
 
-                process(_frame,showImg,INFER_FORMAT);
             }
 
-            emit handleReady(showImg);
+            emit handleReady(showImg,nameStr);
             _newImage = false;
         }
     }
@@ -66,7 +80,7 @@ std::vector<cv::Mat> HandleThread::process(const cv::Mat& inputMat,cv::Mat& outp
         std::string antiStr = std::string(antiRst.isFake ? "fake " : "real ") + "  score:" +
                               std::to_string(antiRst.antiSpoofConf);
         cv::putText(outputMat, antiStr, r.tl(), 1, 1, cv::Scalar(0x27, 0xC1, 0x36));
-        std::cout << antiRst.isFake << "  conf: " << antiRst.antiSpoofConf << std::endl;
+        std::cout <<"Anti info: "<< antiRst.isFake << "  conf: " << antiRst.antiSpoofConf << std::endl;
 #if ENABLE_ANTI
         if(antiRst.isFake) {
                     continue;
@@ -87,6 +101,7 @@ void HandleThread::updateData(bool mode, const QString& id, const QString& name)
     if(mode==true){//append face
         _saveMode=true;
         _appendId=id;
+        _appendName=name;
     }else{//delete face ,already delete at UI thread
 
     }
