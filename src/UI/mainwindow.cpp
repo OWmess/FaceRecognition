@@ -71,8 +71,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->appendAction, SIGNAL(triggered()),this,SLOT(faceAppendSlot()));
     connect(ui->deleteAction, SIGNAL(triggered()),this,SLOT(faceDeleteSlot()));
     connect(ui->detectAction, SIGNAL(triggered()),this,SLOT(detectSlot()));
-    connect(dialog.get(),SIGNAL(updateData(bool,QString,QString)),&handleThread,SLOT(updateData(bool, QString, QString)));
+    connect(faceDialog.get(), SIGNAL(updateData(bool, QString, QString)), &handleThread, SLOT(updateData(bool, QString, QString)));
     connect(&handleThread, SIGNAL(detectorEmpty()),this, SLOT(detectorEmptySlot()));
+
+
 }
 
 MainWindow::~MainWindow()

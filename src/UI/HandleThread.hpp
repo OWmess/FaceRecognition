@@ -19,6 +19,7 @@ public:
 
     ~HandleThread();
 
+    cv::Mat appendProcess(const cv::Mat& inputMat,cv::Mat& outputMat,int rows,int cols);
 signals:
 
     void handleReady(const cv::Mat &image,QString);
@@ -35,7 +36,7 @@ protected:
     void run() override;
 private:
     std::vector<cv::Mat> process(const cv::Mat& inputMat,cv::Mat& outputMat,int rows,int cols);
-    cv::Mat appendProcess(const cv::Mat& inputMat,cv::Mat& outputMat,int rows,int cols);
+
     cv::Mat _frame;
     bool _newImage;
     bool _saveMode;

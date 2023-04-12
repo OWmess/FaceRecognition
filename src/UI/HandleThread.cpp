@@ -35,9 +35,8 @@ void HandleThread::run() {
 
                 fm.appendFace({_appendId.toStdString(),_appendName.toStdString()},norm);
                 auto savedir=fm.getSaveDir()+_appendId.toStdString()+".jpg";
-                cv::imwrite(savedir,_frame);
+                cv::imwrite(savedir,showImg);
                 _saveMode=false;
-
             }else{
                 auto normvec=process(_frame,showImg,INFER_FORMAT);
                 for(const auto& norm:normvec) {
