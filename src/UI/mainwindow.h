@@ -8,6 +8,7 @@
 #include <QFileDialog>
 #include "HandleThread.hpp"
 #include "facedialog.h"
+#include "ErrorMsg.hpp"
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -64,13 +65,13 @@ public:
 
 public slots:
     void faceAppendSlot() {
-        std::unique_ptr<FaceDialog> dialog = std::make_unique<FaceDialog>(true,this);
+        dialog->setMode(true);
         dialog->exec();
         this->update();
     }
 
     void faceDeleteSlot() {
-        std::unique_ptr<FaceDialog> dialog = std::make_unique<FaceDialog>(false,this);
+        dialog->setMode(false);
         dialog->exec();
         this->update();
     }
@@ -83,7 +84,13 @@ public slots:
         }
 
     }
+
+    void detectorEmptySlot(){
+        qDebug()<<"未检测到人脸"<<Qt::endl;
+        errorMsg("未检测到人脸",this);
+    }
 private:
+    std::unique_ptr<FaceDialog> dialog = std::make_unique<FaceDialog>(false,this);
     Ui::MainWindow *ui;
     CameraThread cameraThread;
     DisplayThread displayThread;

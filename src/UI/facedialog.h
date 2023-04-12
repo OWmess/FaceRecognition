@@ -15,6 +15,7 @@ public:
     explicit FaceDialog(bool mode,QWidget *parent = nullptr);
     ~FaceDialog();
 
+    void setMode(bool mode);
 signals:
     void updateData(bool mode,QString id,QString name);
 
