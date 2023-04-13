@@ -7,7 +7,7 @@
 #include <QString>
 #include <QErrorMessage>
 #include <QWidget>
-inline void errorMsg(QString str,QWidget* parent){
+inline void errorMsg(QString str,QWidget* parent=nullptr){
     QErrorMessage msg(parent);
     msg.showMessage(str);
     msg.exec();

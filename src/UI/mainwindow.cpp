@@ -4,7 +4,12 @@
 CameraThread::CameraThread(QObject *parent)
     : QThread(parent)
 {
-    _camera.open(0);
+    try {
+        _camera.open(0);
+    }catch(const std::exception& e){
+        std:: string str=e.what();
+        errorMsg(QString::fromStdString(str));
+    }
 }
 
 CameraThread::~CameraThread()
@@ -15,6 +20,7 @@ CameraThread::~CameraThread()
 void CameraThread::run()
 {
     while (!isInterruptionRequested()) {
+
         _camera.read(_frame);
 #if ROTATE_CAMERA
         cv::transpose(_frame, _frame);
@@ -70,9 +76,11 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&displayThread, SIGNAL(sendNameStr(QString)), ui->nameLabel, SLOT(setText(QString)));
     connect(ui->appendAction, SIGNAL(triggered()),this,SLOT(faceAppendSlot()));
     connect(ui->deleteAction, SIGNAL(triggered()),this,SLOT(faceDeleteSlot()));
-    connect(ui->detectAction, SIGNAL(triggered()),this,SLOT(detectSlot()));
+    connect(ui->appendImgAction, SIGNAL(triggered()),this,SLOT(appendImgSlot()));
+    connect(ui->detectImgAction, SIGNAL(triggered()),this,SLOT(detectImgSlot()));
     connect(faceDialog.get(), SIGNAL(updateData(bool, QString, QString)), &handleThread, SLOT(updateData(bool, QString, QString)));
     connect(&handleThread, SIGNAL(detectorEmpty()),this, SLOT(detectorEmptySlot()));
+    connect(this,SIGNAL(detectImgSendStr(QString)),imageDialog.get(),SLOT(updateNameText(QString)));
 
 
 }

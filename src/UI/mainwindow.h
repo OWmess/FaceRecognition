@@ -69,7 +69,8 @@ public:
     MainWindow(QWidget *parent = nullptr);
 
     ~MainWindow();
-
+signals:
+    void detectImgSendStr(QString s);
 public slots:
 
     void faceAppendSlot() {
@@ -84,7 +85,7 @@ public slots:
         this->update();
     }
 
-    void detectSlot() {
+    void appendImgSlot() {
         QString filesPath = QFileDialog::getOpenFileName(this, tr("选择图片"), QDir::homePath(),
                                                               tr("Image Files(*.png *.jpg *.bmp);;All Files (*.*)"));
         if (!filesPath.isEmpty()) {
@@ -99,10 +100,13 @@ public slots:
             auto norm = handleThread.appendProcess(img, outImg, SAVE_FORMAT);
             if(norm.cols==0&&norm.rows==0){
                 errorMsg("未识别到人脸!",this);
+                return;
             }
-            cv::cvtColor(outImg, outImg, cv::COLOR_BGR2RGB);
-            QImage qimage(outImg.data, outImg.cols, outImg.rows, outImg.step, QImage::Format_RGB888);
+            cv::Mat tmp;
+            cv::cvtColor(outImg, tmp, cv::COLOR_BGR2RGB);
+            QImage qimage(tmp.data, tmp.cols, tmp.rows, tmp.step, QImage::Format_RGB888);
             QPixmap qpixmap=QPixmap::fromImage(qimage);
+            imageDialog->setMode(false);
             imageDialog->setPixmap(qpixmap);
             imageDialog->setNorm(norm);
             imageDialog->exec();
@@ -116,6 +120,54 @@ public slots:
         }
 
     }
+
+    void detectImgSlot() {
+        QString filesPath = QFileDialog::getOpenFileName(this, tr("选择图片"), QDir::homePath(),
+                                                         tr("Image Files(*.png *.jpg *.bmp);;All Files (*.*)"));
+        if (!filesPath.isEmpty()) {
+            cv::Mat img = cv::imread(filesPath.toStdString());
+            if (img.empty()) {
+                errorMsg("无法打开文件!", this);
+                return;
+            }
+            cv::resize(img, img, {640, 480});
+            cv::Mat outImg = img.clone();
+            auto norm = handleThread.appendProcess(img, outImg, INFER_FORMAT);
+            if(norm.cols==0&&norm.rows==0){
+                errorMsg("未识别到人脸!",this);
+                return;
+            }
+            cv::Mat tmp;
+            cv::cvtColor(outImg, tmp, cv::COLOR_BGR2RGB);
+            QImage qimage(tmp.data, tmp.cols, tmp.rows, tmp.step, QImage::Format_RGB888);
+            QPixmap qpixmap=QPixmap::fromImage(qimage);
+            imageDialog->setMode(true);
+            imageDialog->setPixmap(qpixmap);
+            imageDialog->setNorm(norm);
+            auto &fm = FileManager::getInstance();
+            std::string nameStr;
+            std::for_each(fm.getFaceData().begin(), fm.getFaceData().end(), [&](const auto &pair) {
+                cv::Mat res = norm * pair.second;
+                float score = *(float *) res.data;
+                if (score > CONTRAST_THRESH) {
+                    nameStr += " " + pair.first.name;
+                    std::cout << pair.first.name << " conf: " << score << std::endl;
+                }
+                return;
+            });
+            emit detectImgSendStr(QString::fromStdString(nameStr));
+            imageDialog->exec();
+
+
+
+
+
+
+
+
+        }
+    }
+
 
     void detectorEmptySlot() {
         qDebug() << "未检测到人脸" << Qt::endl;

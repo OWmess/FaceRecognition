@@ -76,14 +76,15 @@
     <addaction name="appendAction"/>
     <addaction name="deleteAction"/>
    </widget>
-   <widget class="QMenu" name="detectMenu">
+   <widget class="QMenu" name="imageMenu">
     <property name="title">
-     <string>图片识别</string>
+     <string>图片</string>
     </property>
-    <addaction name="detectAction"/>
+    <addaction name="appendImgAction"/>
+    <addaction name="detectImgAction"/>
    </widget>
    <addaction name="faceMenu"/>
-   <addaction name="detectMenu"/>
+   <addaction name="imageMenu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="appendAction">
@@ -91,14 +92,19 @@
     <string>添加</string>
    </property>
   </action>
-  <action name="detectAction">
+  <action name="appendImgAction">
    <property name="text">
-    <string>识别</string>
+    <string>添加人脸</string>
    </property>
   </action>
   <action name="deleteAction">
    <property name="text">
     <string>删除</string>
+   </property>
+  </action>
+  <action name="detectImgAction">
+   <property name="text">
+    <string>识别</string>
    </property>
   </action>
  </widget>

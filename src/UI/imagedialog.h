@@ -14,9 +14,7 @@ class ImageDialog : public QDialog
 public:
     explicit ImageDialog(QWidget *parent = nullptr);
     ~ImageDialog();
-    void setPixmap(const QPixmap &t){
-        emit sendPixmap(t);
-    }
+    void setPixmap(const QPixmap &t);
     void setNorm(const cv::Mat& n){
         norm=n;
     }
@@ -27,13 +25,15 @@ public:
         write=false;
         return t;
     }
+
+    void setMode(bool m){
+        mode=m;
+    }
 public slots:
+    void updateNameText(QString text);
 
     signals:
     void sendPixmap(const QPixmap&);
-
-    void sendFaceInfo(const FaceInfo&);
-
 
 private slots:
     void accpetSlot();
@@ -43,6 +43,8 @@ private:
     cv::Mat norm;
     bool write=false;
     std::string _id;
+    //false是添加，true是检测
+    bool mode;
 };
 
 #endif // IMAGEDIALOG_H

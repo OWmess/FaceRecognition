@@ -3,12 +3,20 @@
 //
 
 #include "UI/mainwindow.h"
-
+#include <windows.h>
 #include <QApplication>
 
 
 int main(int argc, char *argv[])
 {
+#if defined(Q_OS_WIN)
+    // 隐藏控制台窗口
+    HWND hWnd = GetConsoleWindow();
+    if (hWnd != NULL)
+    {
+        ShowWindow(hWnd, SW_HIDE);
+    }
+#endif
     QApplication a(argc, argv);
     MainWindow w;
     w.show();

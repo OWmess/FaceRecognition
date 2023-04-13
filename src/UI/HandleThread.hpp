@@ -42,7 +42,7 @@ private:
     bool _saveMode;
     QString _appendId;
     QString _appendName;
-    std::vector<cv::Mat> norm;
+//    std::vector<cv::Mat> norm;
     std::unique_ptr<TRTInfer> _antiSpoofingPtr = std::make_unique<AntiSpoofing>(
             GET_PRJ_DIR() + "/models/AntiSpoofing.onnx", MODELCONFIG::ANTISPOOLING::INPUT_W,
             MODELCONFIG::ANTISPOOLING::INPUT_H, MODELCONFIG::ANTISPOOLING::OUTPUTSIZE);
