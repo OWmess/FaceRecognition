@@ -9,8 +9,16 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(WIN32)
-    set(CMAKE_WIN32_EXECUTABLE TRUE)
+#    set(CMAKE_WIN32_EXECUTABLE TRUE)
 endif()
+
+# 添加新的图标文件
+
+
+
+
+
+
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 set(CMAKE_GENERATOR "Visual Studio 17 2022")
@@ -46,6 +54,8 @@ target_link_libraries(arcface nvinfer cudart cuda decodeplugin preluplugins trti
 add_library(retinaface SHARED src/TRTInfer/RetinaFace/RetinaFace_R50.cpp)
 target_link_libraries(retinaface nvinfer cudart cuda decodeplugin preluplugins trtinfer ${OpenCV_LIBS})
 
+add_library(mylib STATIC IMPORTED)
+set_target_properties(mylib PROPERTIES IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/lib/*.lib)
 #
 
 set(PROJECT_FILE
@@ -90,12 +100,15 @@ set(PROJECT_FILE
 
 #add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/src/main.cpp ${SOURCE_FILES})
 target_link_libraries(${PROJECT_NAME}
-        PRIVATE antispoofing arcface retinaface trtinfer
+        PRIVATE antispoofing arcface retinaface trtinfer mylib
         Qt${QT_VERSION_MAJOR}::Widgets ${OpenCV_LIBS})
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON
 #        WIN32_EXECUTABLE TRUE
         )
+set(PROJECT_ICON ${PROJECT_SOURCE_DIR}/icon/icon.png)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+        WIN32_EXECUTABLE_ICON ${PROJECT_ICON})
 
 install(TARGETS ${PROJECT_NAME}
         BUNDLE DESTINATION .
