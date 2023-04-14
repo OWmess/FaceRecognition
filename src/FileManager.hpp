@@ -60,29 +60,17 @@ public:
             return id==pair.first.id;
         });
         _faceData.erase(iter);
-        auto deletePath=_saveDir+id+".jpg";
-        std::filesystem::remove(deletePath);
-        saveFaceInfo();
     }
 
     void appendFace(const FaceInfo& info, const cv::Mat& norm){
         _faceData.insert(std::make_pair(info, norm));
-        saveFaceInfo();
     }
 
-    FileManager(const FileManager&) = delete;
-    FileManager& operator=(const FileManager&) = delete;
-private:
-    FileManager() {
-        loadFaceInfo();
-    }
-    ~FileManager() = default;
-
-    bool saveFaceInfo(){
-        cv::FileStorage fs(_saveDir+"FaceInfo.yaml",cv::FileStorage::WRITE| cv::FileStorage::FORMAT_YAML);
+    bool saveFaceInfo(const QString& path){
+        cv::FileStorage fs(path.toStdString(),cv::FileStorage::WRITE| cv::FileStorage::FORMAT_YAML);
         if (!fs.isOpened())
         {
-            std::cerr << "Failed to save face data to yaml "<< std::endl;
+            std::cerr << "Failed to save face data to local "<< std::endl;
             return false;
         }
         fs << "FaceMap" << "{";
@@ -100,12 +88,11 @@ private:
 
     }
 
-    bool loadFaceInfo(){
-        cv::FileStorage fs(_saveDir+"FaceInfo.yaml",cv::FileStorage::READ| cv::FileStorage::FORMAT_YAML);
-        _faceData.clear();
+    bool loadFaceInfo(const QString& path){
+        cv::FileStorage fs(path.toStdString(),cv::FileStorage::READ| cv::FileStorage::FORMAT_YAML);
         if (!fs.isOpened())
         {
-            std::cerr << "Failed to save face data to yaml "<< std::endl;
+            std::cerr << "Failed to load face data from local "<< std::endl;
             return false;
         }
 
@@ -123,14 +110,19 @@ private:
             node[index]["id"]>>tmpInfo.id;
             node[index]["name"]>>tmpInfo.name;
             node[index]["mat"]>>tmpMat;
-
-            _faceData.insert(std::pair(tmpInfo,tmpMat));
+            if(!_faceData.count(tmpInfo))
+                _faceData.insert(std::pair(tmpInfo,tmpMat));
         }
 
         fs.release();
         return true;
     }
-
+    FileManager(const FileManager&) = delete;
+    FileManager& operator=(const FileManager&) = delete;
+private:
+    FileManager() {
+    }
+    ~FileManager() = default;
     const std::string _projDir=GET_PRJ_DIR();
     const std::string _saveDir=_projDir+"/savedata/";
     FaceMap _faceData;

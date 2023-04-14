@@ -66,7 +66,7 @@
      <x>0</x>
      <y>0</y>
      <width>640</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="faceMenu">
@@ -75,6 +75,8 @@
     </property>
     <addaction name="appendAction"/>
     <addaction name="deleteAction"/>
+    <addaction name="saveFaceBaseAction"/>
+    <addaction name="loadFaceBaseAction"/>
    </widget>
    <widget class="QMenu" name="imageMenu">
     <property name="title">
@@ -105,6 +107,16 @@
   <action name="detectImgAction">
    <property name="text">
     <string>识别</string>
+   </property>
+  </action>
+  <action name="saveFaceBaseAction">
+   <property name="text">
+    <string>保存人脸库到本地</string>
+   </property>
+  </action>
+  <action name="loadFaceBaseAction">
+   <property name="text">
+    <string>从本地读取人脸库</string>
    </property>
   </action>
  </widget>

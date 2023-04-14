@@ -69,8 +69,11 @@ public:
     MainWindow(QWidget *parent = nullptr);
 
     ~MainWindow();
+
 signals:
+
     void detectImgSendStr(QString s);
+
 public slots:
 
     void faceAppendSlot() {
@@ -87,35 +90,29 @@ public slots:
 
     void appendImgSlot() {
         QString filesPath = QFileDialog::getOpenFileName(this, tr("选择图片"), QDir::homePath(),
-                                                              tr("Image Files(*.png *.jpg *.bmp);;All Files (*.*)"));
+                                                         tr("Image Files(*.png *.jpg *.bmp);;All Files (*.*)"));
         if (!filesPath.isEmpty()) {
-                cv::Mat img = cv::imread(filesPath.toStdString());
-                if(img.empty()){
-                    errorMsg("无法打开文件!",this);
-                    return;
-                }
-            cv::resize(img,img,{640,480});
+            cv::Mat img = cv::imread(filesPath.toStdString());
+            if (img.empty()) {
+                errorMsg("无法打开文件!", this);
+                return;
+            }
+            cv::resize(img, img, {640, 480});
 
             cv::Mat outImg = img.clone();
             auto norm = handleThread.appendProcess(img, outImg, SAVE_FORMAT);
-            if(norm.cols==0&&norm.rows==0){
-                errorMsg("未识别到人脸!",this);
+            if (norm.cols == 0 && norm.rows == 0) {
+                errorMsg("未识别到人脸!", this);
                 return;
             }
             cv::Mat tmp;
             cv::cvtColor(outImg, tmp, cv::COLOR_BGR2RGB);
             QImage qimage(tmp.data, tmp.cols, tmp.rows, tmp.step, QImage::Format_RGB888);
-            QPixmap qpixmap=QPixmap::fromImage(qimage);
+            QPixmap qpixmap = QPixmap::fromImage(qimage);
             imageDialog->setMode(false);
             imageDialog->setPixmap(qpixmap);
             imageDialog->setNorm(norm);
             imageDialog->exec();
-            auto &fm=FileManager::getInstance();
-            std::string id;
-            if(imageDialog->getWriteFlag(id)) {
-                auto savedir = fm.getSaveDir() + id + ".jpg";
-                cv::imwrite(savedir,outImg);
-            }
             // 处理所选文件的路径
         }
 
@@ -133,14 +130,14 @@ public slots:
             cv::resize(img, img, {640, 480});
             cv::Mat outImg = img.clone();
             auto norm = handleThread.appendProcess(img, outImg, INFER_FORMAT);
-            if(norm.cols==0&&norm.rows==0){
-                errorMsg("未识别到人脸!",this);
+            if (norm.cols == 0 && norm.rows == 0) {
+                errorMsg("未识别到人脸!", this);
                 return;
             }
             cv::Mat tmp;
             cv::cvtColor(outImg, tmp, cv::COLOR_BGR2RGB);
             QImage qimage(tmp.data, tmp.cols, tmp.rows, tmp.step, QImage::Format_RGB888);
-            QPixmap qpixmap=QPixmap::fromImage(qimage);
+            QPixmap qpixmap = QPixmap::fromImage(qimage);
             imageDialog->setMode(true);
             imageDialog->setPixmap(qpixmap);
             imageDialog->setNorm(norm);
@@ -157,23 +154,33 @@ public slots:
             });
             emit detectImgSendStr(QString::fromStdString(nameStr));
             imageDialog->exec();
-
-
-
-
-
-
-
-
         }
     }
-
 
     void detectorEmptySlot() {
         qDebug() << "未检测到人脸" << Qt::endl;
         errorMsg("未检测到人脸", this);
     }
 
+    void saveFaceBaseSlot() {
+
+        QString filesPath = QFileDialog::getSaveFileName(this, tr("选择路径"), QDir::homePath(),
+                                                         tr("Faces Files(*.facedata)"));
+        if(filesPath.isEmpty())
+            return;
+        auto &fm=FileManager::getInstance();
+        fm.saveFaceInfo(filesPath);
+
+    }
+
+    void loadFaceBaseSlot(){
+        QString filesPath = QFileDialog::getOpenFileName(this, tr("选择文件"), QDir::homePath(),
+                                                         tr("Faces Files(*.facedata)"));
+        if(filesPath.isEmpty())
+            return;
+        auto &fm=FileManager::getInstance();
+        fm.loadFaceInfo(filesPath);
+    }
 private:
     std::unique_ptr<FaceDialog> faceDialog = std::make_unique<FaceDialog>(false, this);
     std::unique_ptr<ImageDialog> imageDialog = std::make_unique<ImageDialog>(this);

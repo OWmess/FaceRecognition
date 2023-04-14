@@ -81,8 +81,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(faceDialog.get(), SIGNAL(updateData(bool, QString, QString)), &handleThread, SLOT(updateData(bool, QString, QString)));
     connect(&handleThread, SIGNAL(detectorEmpty()),this, SLOT(detectorEmptySlot()));
     connect(this,SIGNAL(detectImgSendStr(QString)),imageDialog.get(),SLOT(updateNameText(QString)));
-
-
+    connect(ui->saveFaceBaseAction, SIGNAL(triggered()),this,SLOT(saveFaceBaseSlot()));
+    connect(ui->loadFaceBaseAction, SIGNAL(triggered()),this,SLOT(loadFaceBaseSlot()));
 }
 
 MainWindow::~MainWindow()
