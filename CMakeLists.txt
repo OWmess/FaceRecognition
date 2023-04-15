@@ -1,13 +1,19 @@
 cmake_minimum_required(VERSION 3.24)
 set(CMAKE_CUDA_ARCHITECTURES 75)
 project(FaceRecognition VERSION 0.1 LANGUAGES CXX CUDA)
-option(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
+option(CUDA_USE_STATIC_CUDA_RUNTIME ON)
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++17")
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MT")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MT")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MT")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MT")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 if(WIN32)
 #    set(CMAKE_WIN32_EXECUTABLE TRUE)
 endif()
@@ -37,25 +43,23 @@ link_directories(C:\\Program\ Files\\NVIDIA\\TensorRT-8.5.3.1\\lib)
 
 find_package(CUDA REQUIRED)
 #用cuda编译
-cuda_add_library(decodeplugin SHARED src/TRTInfer/RetinaFace/decode.cu)
+cuda_add_library(decodeplugin STATIC src/TRTInfer/RetinaFace/decode.cu)
 target_link_libraries(decodeplugin nvinfer cudart)
-cuda_add_library(preluplugins SHARED src/TRTInfer/ArcFace/prelu.cu)
+cuda_add_library(preluplugins STATIC src/TRTInfer/ArcFace/prelu.cu)
 target_link_libraries(preluplugins nvinfer cudart)
 
-add_library(trtinfer SHARED src/TRTInfer/TRTInfer.cpp)
+add_library(trtinfer STATIC src/TRTInfer/TRTInfer.cpp)
 target_link_libraries(trtinfer nvonnxparser nvinfer cudart cuda decodeplugin ${OpenCV_LIBS})
 
-add_library(antispoofing SHARED src/TRTInfer/AntiSpoofing/AntiSpoofing.cpp)
+add_library(antispoofing STATIC src/TRTInfer/AntiSpoofing/AntiSpoofing.cpp)
 target_link_libraries(antispoofing nvonnxparser nvinfer cudart cuda decodeplugin preluplugins trtinfer ${OpenCV_LIBS})
 
-add_library(arcface SHARED src/TRTInfer/ArcFace/ArcFace_R100.cpp)
+add_library(arcface STATIC src/TRTInfer/ArcFace/ArcFace_R100.cpp)
 target_link_libraries(arcface nvinfer cudart cuda decodeplugin preluplugins trtinfer ${OpenCV_LIBS})
 
-add_library(retinaface SHARED src/TRTInfer/RetinaFace/RetinaFace_R50.cpp)
+add_library(retinaface STATIC src/TRTInfer/RetinaFace/RetinaFace_R50.cpp)
 target_link_libraries(retinaface nvinfer cudart cuda decodeplugin preluplugins trtinfer ${OpenCV_LIBS})
 
-add_library(mylib STATIC IMPORTED)
-set_target_properties(mylib PROPERTIES IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/lib/*.lib)
 #
 
 set(PROJECT_FILE
@@ -100,7 +104,7 @@ set(PROJECT_FILE
 
 #add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/src/main.cpp ${SOURCE_FILES})
 target_link_libraries(${PROJECT_NAME}
-        PRIVATE antispoofing arcface retinaface trtinfer mylib
+        PRIVATE antispoofing arcface retinaface trtinfer
         Qt${QT_VERSION_MAJOR}::Widgets ${OpenCV_LIBS})
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON

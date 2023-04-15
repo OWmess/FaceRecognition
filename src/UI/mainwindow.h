@@ -10,7 +10,8 @@
 #include "facedialog.h"
 #include "ErrorMsg.hpp"
 #include "imagedialog.h"
-
+#include <string>
+#include <filesystem>
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -91,6 +92,7 @@ public slots:
     void appendImgSlot() {
         QString filesPath = QFileDialog::getOpenFileName(this, tr("选择图片"), QDir::homePath(),
                                                          tr("Image Files(*.png *.jpg *.bmp);;All Files (*.*)"));
+
         if (!filesPath.isEmpty()) {
             cv::Mat img = cv::imread(filesPath.toStdString());
             if (img.empty()) {
@@ -121,9 +123,10 @@ public slots:
     void detectImgSlot() {
         QString filesPath = QFileDialog::getOpenFileName(this, tr("选择图片"), QDir::homePath(),
                                                          tr("Image Files(*.png *.jpg *.bmp);;All Files (*.*)"));
+        std::string image_path_utf8 = std::filesystem::path(filesPath.toStdWString()).u8string();
         if (!filesPath.isEmpty()) {
-            cv::Mat img = cv::imread(filesPath.toStdString());
-            if (img.empty()) {
+            cv::Mat img = cv::imread(image_path_utf8);
+            if (img.empty()) {//TODO 暂时不能使用带中文的路径
                 errorMsg("无法打开文件!", this);
                 return;
             }

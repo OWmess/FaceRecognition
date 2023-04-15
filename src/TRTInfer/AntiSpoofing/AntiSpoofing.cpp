@@ -31,7 +31,7 @@ ICudaEngine* AntiSpoofing::createEngine(unsigned int maxBatchSize, IBuilder* bui
     assert(parsingSuccess==true);
 
 #ifdef USE_FP16
-    config->setFlag(BuilderFlag::kFP16);
+//    config->setFlag(BuilderFlag::kFP16);
 #endif
     auto profile=builder->createOptimizationProfile();
     profile->setDimensions(INPUT_BLOB_NAME,OptProfileSelector::kMIN,Dims4{1,3,80,80});
@@ -59,7 +59,8 @@ ICudaEngine* AntiSpoofing::createEngine(unsigned int maxBatchSize, IBuilder* bui
 TRTInfer::StructRst AntiSpoofing::infer(const cv::Mat &img,decodeplugin::Detection bbox,float thresh) {
     static float* prob=_probPtr.get();
     static float* data=_dataPtr.get();
-    cv::Mat x= std::move(getRoi(img,bbox.bbox,ANTI_SPOOFING_SCALE));
+    cv::Mat x= getRoi(img,bbox.bbox,ANTI_SPOOFING_SCALE);
+//    x=cv::imread(GET_PRJ_DIR()+"/models/real.jpg");
     cv::cvtColor(x,x,cv::COLOR_BGR2RGB);
     cv::Mat b(80,80,CV_32FC3,data);
     for (int i = 0; i < INPUT_H * INPUT_W; i++) {
@@ -67,6 +68,7 @@ TRTInfer::StructRst AntiSpoofing::infer(const cv::Mat &img,decodeplugin::Detecti
         b.at<cv::Vec3f>(i)[1] = ((float)x.at<cv::Vec3b>(i)[0]) ;
         b.at<cv::Vec3f>(i)[2] = ((float)x.at<cv::Vec3b>(i)[1]);
     }
+
     doInference(data,prob);
     std::vector<float>vec{prob[0],prob[1],prob[2]};
 
@@ -83,7 +85,8 @@ TRTInfer::StructRst AntiSpoofing::infer(const cv::Mat &img,decodeplugin::Detecti
     }
 //    std::cout<<"maxIndex:   "<<maxIndex<<std::endl;
     StructRst rst;
-    rst.antiSpoof={vec[1],maxIndex!=1 || vec[1]<thresh ? true :false};
+    //TODO  取反了，待修改！！
+    rst.antiSpoof={vec[1],!(maxIndex!=1 || vec[1]<thresh ? true :false)};
     return rst;
 }
 
@@ -99,8 +102,8 @@ void AntiSpoofing::doInference(float* input, float* output) {
 cv::Mat AntiSpoofing::getRoi(const cv::Mat &src, float bbox[], float scale) {
     const float x=bbox[0];
     const float y=bbox[1];
-    const float box_w=bbox[2];
-    const float box_h=bbox[3];
+    const float box_w=abs(bbox[0]-bbox[2]);
+    const float box_h=abs(bbox[1]-bbox[3]);
     scale= std::min({(src.size().height-1.f)/box_h,(src.size().width-1.f)/box_w,scale});
 
     const float new_width=box_w*scale;

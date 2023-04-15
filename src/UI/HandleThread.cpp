@@ -75,10 +75,9 @@ std::vector<cv::Mat> HandleThread::process(const cv::Mat& inputMat,cv::Mat& outp
                        cv::Scalar(255 * (k > 2), 255 * (k > 0 && k < 8), 255 * (k < 6)), 4);
         }
         auto antiRst = _antiSpoofingPtr->infer(img, i, ANTI_SPOOFING_THRESH).antiSpoof;
-        std::string antiStr = std::string(antiRst.isFake ? "fake " : "real ") + "  score:" +
-                              std::to_string(antiRst.antiSpoofConf);
+        std::string antiStr = std::string(antiRst.isFake ? "fake " : "real ");
         cv::putText(outputMat, antiStr, r.tl(), 1, 1, cv::Scalar(0x27, 0xC1, 0x36));
-        std::cout <<"Anti info: "<< antiRst.isFake << "  conf: " << antiRst.antiSpoofConf << std::endl;
+//        std::cout <<"Anti info: "<< antiRst.isFake << "  conf: " << antiRst.antiSpoofConf << std::endl;
 #if ENABLE_ANTI
         if(antiRst.isFake) {
                     continue;
