@@ -44,7 +44,7 @@ void DisplayThread::updateImage(const cv::Mat& image,QString str)
     this->image = image.clone();
     this->nameStr=str;
     newImage = true;
-    qDebug()<<str<<Qt::endl;
+//    qDebug()<<str<<Qt::endl;
 }
 
 void DisplayThread::run()
@@ -71,7 +71,7 @@ MainWindow::MainWindow(QWidget *parent)
     displayThread.start();
     handleThread.start();
     connect(&cameraThread, SIGNAL(imageReady(cv::Mat)), &handleThread, SLOT(updateFrame(cv::Mat)));
-    connect(&handleThread, SIGNAL(handleReady(const cv::Mat&,QString)),&displayThread, SLOT(updateImage(const cv::Mat&,QString)));
+    connect(&handleThread, SIGNAL(handleReady(const cv::Mat&,QString)), &displayThread, SLOT(updateImage(const cv::Mat&,QString)));
     connect(&displayThread, SIGNAL(sendImage(QPixmap)), ui->label, SLOT(setPixmap(QPixmap)));
     connect(&displayThread, SIGNAL(sendNameStr(QString)), ui->nameLabel, SLOT(setText(QString)));
     connect(ui->appendAction, SIGNAL(triggered()),this,SLOT(faceAppendSlot()));
@@ -79,7 +79,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->appendImgAction, SIGNAL(triggered()),this,SLOT(appendImgSlot()));
     connect(ui->detectImgAction, SIGNAL(triggered()),this,SLOT(detectImgSlot()));
     connect(faceDialog.get(), SIGNAL(updateData(bool, QString, QString)), &handleThread, SLOT(updateData(bool, QString, QString)));
-    connect(&handleThread, SIGNAL(detectorEmpty()),this, SLOT(detectorEmptySlot()));
+    connect(&handleThread, SIGNAL(detectorEmpty()), this, SLOT(detectorEmptySlot()));
     connect(this,SIGNAL(detectImgSendStr(QString)),imageDialog.get(),SLOT(updateNameText(QString)));
     connect(ui->saveFaceBaseAction, SIGNAL(triggered()),this,SLOT(saveFaceBaseSlot()));
     connect(ui->loadFaceBaseAction, SIGNAL(triggered()),this,SLOT(loadFaceBaseSlot()));

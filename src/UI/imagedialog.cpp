@@ -30,7 +30,7 @@ void ImageDialog::accpetSlot() {
             float score = *(float *) res.data;
             if (score > CONTRAST_THRESH) {
                 nameStr += " " + pair.first.name;
-                std::cout << pair.first.name << " conf: " << score << std::endl;
+//                std::cout << pair.first.name << " conf: " << score << std::endl;
             }
             return;
         });

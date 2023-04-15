@@ -29,7 +29,7 @@
      </font>
     </property>
     <property name="text">
-     <string>正在打开摄像头</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;正在打开摄像头...&lt;/p&gt;&lt;p&gt;正在初始化人脸识别模型...&lt;/p&gt;&lt;p&gt;首次打开可能需要耗费较长时间...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>

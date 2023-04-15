@@ -9,17 +9,11 @@
 
 int main(int argc, char *argv[])
 {
-#if defined(Q_OS_WIN)
-    // 隐藏控制台窗口
-    HWND hWnd = GetConsoleWindow();
-    if (hWnd != NULL)
-    {
-        ShowWindow(hWnd, SW_HIDE);
-    }
-#endif
+    qDebug()<<"欢迎使用人脸识别系统，首次使用可能需要较长时间加载模型\n请稍等……"<<Qt::endl;
     QApplication a(argc, argv);
     MainWindow w;
     w.show();
+
     return a.exec();
 }
 

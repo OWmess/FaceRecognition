@@ -44,7 +44,7 @@ void HandleThread::run() {
                         float score=*(float*)res.data;
                         if(score>CONTRAST_THRESH){
                             nameStr+=" "+pair.first.name;
-                            std::cout<<pair.first.name<<" conf: "<<score<<std::endl;
+//                            std::cout<<pair.first.name<<" conf: "<<score<<std::endl;
                         }
                         return;
                     });
@@ -130,6 +130,9 @@ cv::Mat HandleThread::appendProcess(const cv::Mat& inputMat,cv::Mat& outputMat,i
         cv::circle(outputMat, cv::Point(rst1.landmark[k], rst1.landmark[k + 1]), 1,
                    cv::Scalar(255 * (k > 2), 255 * (k > 0 && k < 8), 255 * (k < 6)), 4);
     }
+    auto antiRst = _antiSpoofingPtr->infer(img, rst1, ANTI_SPOOFING_THRESH).antiSpoof;
+    std::string antiStr = std::string(antiRst.isFake ? "fake " : "real ");
+    cv::putText(outputMat, antiStr, r.tl(), 1, 1, cv::Scalar(0x27, 0xC1, 0x36));
     cv::Mat resizeImg;
     cv::resize(img(r), resizeImg, {MODELCONFIG::ARCFACE::INPUT_W, MODELCONFIG::ARCFACE::INPUT_H});
 

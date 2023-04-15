@@ -92,11 +92,11 @@ public slots:
     void appendImgSlot() {
         QString filesPath = QFileDialog::getOpenFileName(this, tr("选择图片"), QDir::homePath(),
                                                          tr("Image Files(*.png *.jpg *.bmp);;All Files (*.*)"));
-
+        std::string str_path = filesPath.toLocal8Bit().constData();
         if (!filesPath.isEmpty()) {
-            cv::Mat img = cv::imread(filesPath.toStdString());
+            cv::Mat img = cv::imread(str_path);
             if (img.empty()) {
-                errorMsg("无法打开文件!", this);
+                errorMsg("无法打开文件,请确保路径中不包含中文!", this);
                 return;
             }
             cv::resize(img, img, {640, 480});
@@ -123,11 +123,11 @@ public slots:
     void detectImgSlot() {
         QString filesPath = QFileDialog::getOpenFileName(this, tr("选择图片"), QDir::homePath(),
                                                          tr("Image Files(*.png *.jpg *.bmp);;All Files (*.*)"));
-        std::string image_path_utf8 = std::filesystem::path(filesPath.toStdWString()).u8string();
+        std::string str_path = filesPath.toLocal8Bit().constData();
         if (!filesPath.isEmpty()) {
-            cv::Mat img = cv::imread(image_path_utf8);
+            cv::Mat img = cv::imread(str_path);
             if (img.empty()) {//TODO 暂时不能使用带中文的路径
-                errorMsg("无法打开文件!", this);
+                errorMsg("无法打开文件,请确保路径中不包含中文!", this);
                 return;
             }
             cv::resize(img, img, {640, 480});
@@ -151,7 +151,7 @@ public slots:
                 float score = *(float *) res.data;
                 if (score > CONTRAST_THRESH) {
                     nameStr += " " + pair.first.name;
-                    std::cout << pair.first.name << " conf: " << score << std::endl;
+//                    std::cout << pair.first.name << " conf: " << score << std::endl;
                 }
                 return;
             });
@@ -172,7 +172,8 @@ public slots:
         if(filesPath.isEmpty())
             return;
         auto &fm=FileManager::getInstance();
-        fm.saveFaceInfo(filesPath);
+        if(!fm.saveFaceInfo(filesPath))
+            errorMsg("无法打开文件,请确保路径中不包含中文!", this);
 
     }
 
@@ -182,7 +183,8 @@ public slots:
         if(filesPath.isEmpty())
             return;
         auto &fm=FileManager::getInstance();
-        fm.loadFaceInfo(filesPath);
+        if(!fm.loadFaceInfo(filesPath))
+            errorMsg("无法打开文件,请确保路径中不包含中文!", this);
     }
 private:
     std::unique_ptr<FaceDialog> faceDialog = std::make_unique<FaceDialog>(false, this);

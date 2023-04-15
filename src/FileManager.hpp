@@ -67,7 +67,8 @@ public:
     }
 
     bool saveFaceInfo(const QString& path){
-        cv::FileStorage fs(path.toStdString(),cv::FileStorage::WRITE| cv::FileStorage::FORMAT_YAML);
+        std::string str_path = path.toLocal8Bit().constData();
+        cv::FileStorage fs(str_path,cv::FileStorage::WRITE| cv::FileStorage::FORMAT_YAML);
         if (!fs.isOpened())
         {
             std::cerr << "Failed to save face data to local "<< std::endl;
@@ -89,7 +90,8 @@ public:
     }
 
     bool loadFaceInfo(const QString& path){
-        cv::FileStorage fs(path.toStdString(),cv::FileStorage::READ| cv::FileStorage::FORMAT_YAML);
+        std::string str_path = path.toLocal8Bit().constData();
+        cv::FileStorage fs(str_path,cv::FileStorage::READ| cv::FileStorage::FORMAT_YAML);
         if (!fs.isOpened())
         {
             std::cerr << "Failed to load face data from local "<< std::endl;
