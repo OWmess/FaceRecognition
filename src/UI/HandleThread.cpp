@@ -1,9 +1,12 @@
 //
 // Created by q1162 on 2023/4/11.
 //
+#pragma execution_character_set("utf-8")
 #include "HandleThread.hpp"
 #include "../config.h"
 #include "../FileManager.hpp"
+#include <codecvt>
+#include <qdebug.h>
 HandleThread::HandleThread(QObject *parent) : QThread(parent), _newImage(false),_saveMode(false) {
 
 }
@@ -23,7 +26,7 @@ void HandleThread::run() {
     auto &fm=FileManager::getInstance();
     while (!isInterruptionRequested()) {
         if (_newImage) {
-            QString nameStr;
+            std::vector<NameFormat> nameVec;
             showImg = _frame.clone();
             if(_saveMode){
                 auto norm=appendProcess(_frame,showImg,SAVE_FORMAT);
@@ -32,36 +35,39 @@ void HandleThread::run() {
                     _saveMode=false;
                     continue;
                 }
-
-                fm.appendFace({_appendId.toStdString(),_appendName.toStdString()},norm);
+                fm.appendFace({_appendId.toStdString(),std::string(_appendName.toStdString())},norm);
+                msleep(10);
                 auto savedir=fm.getSaveDir()+_appendId.toStdString()+".jpg";
                 _saveMode=false;
             }else{
                 auto normvec=process(_frame,showImg,INFER_FORMAT);
                 for(const auto& norm:normvec) {
-                    std::for_each(fm.getFaceData().begin(), fm.getFaceData().end(), [&](const auto &pair) {
-                        cv::Mat res=norm*pair.second;
-                        float score=*(float*)res.data;
-                        if(score>CONTRAST_THRESH){
-                            nameStr+=" "+pair.first.name;
-//                            std::cout<<pair.first.name<<" conf: "<<score<<std::endl;
-                        }
-                        return;
-                    });
+                    QMutexLocker locker(&fm._mutex);
+//                    if (fm.writeReady())
+                        std::for_each(fm.getFaceData().begin(), fm.getFaceData().end(), [&](const auto &pair) {
+                            cv::Mat res = norm.embebding * pair.second;
+                            float score = *(float *) res.data;
+                            if (score > CONTRAST_THRESH) {
+                                QString name = QString::fromStdString(pair.first.name);
+                                nameVec.push_back({name, norm.pt});
+                                std::cout << pair.first.name << " conf: " << score << std::endl;
+                            }
+                            return;
+                        });
                 }
 
             }
 
-            emit handleReady(showImg,nameStr);
+            emit handleReady(showImg,nameVec);
             _newImage = false;
         }
     }
 }
 
-std::vector<cv::Mat> HandleThread::process(const cv::Mat& inputMat,cv::Mat& outputMat,int rows, int cols) {
+std::vector<EmbeddingFormat> HandleThread::process(const cv::Mat& inputMat,cv::Mat& outputMat,int rows, int cols) {
     const cv::Mat& img=inputMat;
     auto detectResult = _retinaFacePtr->infer(img);
-    std::vector<cv::Mat> resultNorm;
+    std::vector<EmbeddingFormat> resultNorm;
     for (auto &i: detectResult.detector) {
 
         cv::Rect r = get_rect_adapt_landmark(outputMat, MODELCONFIG::RETINAFACE::INPUT_W,
@@ -76,7 +82,8 @@ std::vector<cv::Mat> HandleThread::process(const cv::Mat& inputMat,cv::Mat& outp
         }
         auto antiRst = _antiSpoofingPtr->infer(img, i, ANTI_SPOOFING_THRESH).antiSpoof;
         std::string antiStr = std::string(antiRst.isFake ? "fake " : "real ");
-        cv::putText(outputMat, antiStr, r.tl(), 1, 1, cv::Scalar(0x27, 0xC1, 0x36));
+
+
 //        std::cout <<"Anti info: "<< antiRst.isFake << "  conf: " << antiRst.antiSpoofConf << std::endl;
 #if ENABLE_ANTI
         if(antiRst.isFake) {
@@ -87,7 +94,27 @@ std::vector<cv::Mat> HandleThread::process(const cv::Mat& inputMat,cv::Mat& outp
         cv::resize(img(r), resizeImg, {MODELCONFIG::ARCFACE::INPUT_W, MODELCONFIG::ARCFACE::INPUT_H});
 
         auto result=_arcFacePtr->infer(resizeImg, rows,cols);
-        resultNorm.emplace_back(std::move(result.embedding));
+//        std::string nameStr;
+//        auto &fm=FileManager::getInstance();
+//        std::for_each(fm.getFaceData().begin(), fm.getFaceData().end(), [&](const auto &pair) {
+//            cv::Mat res=result.embedding*pair.second;
+//            float score=*(float*)res.data;
+//            if(score>CONTRAST_THRESH){
+//
+//                nameStr="  "+pair.first.name;
+//
+//                            std::cout<<nameStr<<" conf: "<<score<<std::endl;
+//            }
+//            return;
+//        });
+//        std::string str=antiStr+nameStr;
+//
+//        std::cout<<str<<std::endl;
+////        std::cout<<std::string("utf8: ")<<utf8String<<std::endl;
+//
+        cv::putText(outputMat, antiStr, r.tl(), 1, 1, cv::Scalar(0x27, 0xC1, 0x36));
+
+        resultNorm.push_back({result.embedding,r.tl()});
 
     }
 

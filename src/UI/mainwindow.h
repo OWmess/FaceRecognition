@@ -46,7 +46,7 @@ public:
 
 public slots:
 
-    void updateImage(const cv::Mat &image, QString str);
+    void updateImage(const cv::Mat &image, std::vector<NameFormat> nameVec);
 
 signals:
 
@@ -60,7 +60,7 @@ protected:
 private:
     cv::Mat image;
     bool newImage;
-    QString nameStr;
+    std::vector<NameFormat> _nameVec;
 };
 
 class MainWindow : public QMainWindow {

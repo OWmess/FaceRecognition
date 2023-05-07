@@ -1,4 +1,7 @@
 #include "mainwindow.h"
+
+#include <utility>
+#include <QPainter>
 #include "ui_mainwindow.h"
 #include "../config.h"
 CameraThread::CameraThread(QObject *parent)
@@ -39,10 +42,10 @@ DisplayThread::~DisplayThread()
 {
 }
 
-void DisplayThread::updateImage(const cv::Mat& image,QString str)
+void DisplayThread::updateImage(const cv::Mat& image,std::vector<NameFormat> nameVec)
 {
     this->image = image.clone();
-    this->nameStr=str;
+    this->_nameVec=nameVec;
     newImage = true;
 //    qDebug()<<str<<Qt::endl;
 }
@@ -53,6 +56,21 @@ void DisplayThread::run()
         if (newImage) {
             cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
             QImage qimage(image.data, image.cols, image.rows, image.step, QImage::Format_RGB888);
+            QPainter painter(&qimage);
+            // 设置字体属性
+            QFont font("Arial", 10, QFont::Bold);
+            painter.setFont(font);
+
+            // 设置文本颜色
+            QPen pen(Qt::yellow);
+            painter.setPen(pen);
+            QString nameStr;
+            for(const auto &name:_nameVec){
+                painter.drawText(QRect(name.pt.x, name.pt.y, image.cols, image.rows), name.name);
+                nameStr.append(" "+name.name);
+            }
+
+
 
             emit sendImage(QPixmap::fromImage(qimage));
             emit sendNameStr(nameStr);
@@ -71,7 +89,7 @@ MainWindow::MainWindow(QWidget *parent)
     displayThread.start();
     handleThread.start();
     connect(&cameraThread, SIGNAL(imageReady(cv::Mat)), &handleThread, SLOT(updateFrame(cv::Mat)));
-    connect(&handleThread, SIGNAL(handleReady(const cv::Mat&,QString)), &displayThread, SLOT(updateImage(const cv::Mat&,QString)));
+    connect(&handleThread, SIGNAL(handleReady(const cv::Mat&,std::vector<NameFormat>)), &displayThread, SLOT(updateImage(const cv::Mat&,std::vector<NameFormat>)));
     connect(&displayThread, SIGNAL(sendImage(QPixmap)), ui->label, SLOT(setPixmap(QPixmap)));
     connect(&displayThread, SIGNAL(sendNameStr(QString)), ui->nameLabel, SLOT(setText(QString)));
     connect(ui->appendAction, SIGNAL(triggered()),this,SLOT(faceAppendSlot()));

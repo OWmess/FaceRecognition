@@ -11,6 +11,16 @@
 #include "../TRTInfer/ArcFace/ArcFace_R100.h"
 #include "../TRTInfer/AntiSpoofing/AntiSpoofing.h"
 #include<memory>
+
+
+struct NameFormat{
+    QString name;
+    cv::Point pt;
+};
+struct EmbeddingFormat{
+    cv::Mat embebding;
+    cv::Point pt;
+};
 class HandleThread : public QThread {
     Q_OBJECT
 
@@ -22,7 +32,7 @@ public:
     cv::Mat appendProcess(const cv::Mat& inputMat,cv::Mat& outputMat,int rows,int cols);
 signals:
 
-    void handleReady(const cv::Mat &image,QString);
+    void handleReady(const cv::Mat &image,std::vector<NameFormat>);
 
     void detectorEmpty();
 
@@ -35,7 +45,7 @@ public slots:
 protected:
     void run() override;
 private:
-    std::vector<cv::Mat> process(const cv::Mat& inputMat,cv::Mat& outputMat,int rows,int cols);
+    std::vector<EmbeddingFormat> process(const cv::Mat& inputMat,cv::Mat& outputMat,int rows,int cols);
 
     cv::Mat _frame;
     bool _newImage;

@@ -8,6 +8,10 @@
 #include <filesystem>
 #include "utils.h"
 #include <fstream>
+#include <codecvt>
+#include <QString>
+#include <QMutex>
+#include <qdebug.h>
 class FaceInfo{
 public:
     std::string id;
@@ -39,6 +43,7 @@ public:
     }
 
     inline bool findExist(const std::string& filename) {
+        QMutexLocker locker(&_mutex);
         for (const auto& file : std::filesystem::directory_iterator(_saveDir)) {
             if (file.is_regular_file() && file.path().filename() == filename+".jpg") {
                 return true;
@@ -47,7 +52,7 @@ public:
         return false;
     }
 
-    const FaceMap& getFaceData() {
+    const FaceMap &getFaceData() {
         return _faceData;
     }
 
@@ -55,20 +60,33 @@ public:
         return _saveDir;
     }
 
+    [[nodiscard]] bool writeReady(){
+        return !_writeFlag;
+    };
+
+
     void eraseFace(const std::string& id){
+        QMutexLocker locker(&_mutex);
+        _writeFlag=true;
         auto iter=std::find_if(_faceData.begin(),_faceData.end(),[&](const auto& pair){
             return id==pair.first.id;
         });
         _faceData.erase(iter);
+        _writeFlag=false;
     }
 
     void appendFace(const FaceInfo& info, const cv::Mat& norm){
+        QMutexLocker locker(&_mutex);
+        _writeFlag=true;
         _faceData.insert(std::make_pair(info, norm));
+        _writeFlag=false;
     }
 
     bool saveFaceInfo(const QString& path){
+        QMutexLocker locker(&_mutex);
         std::string str_path = path.toLocal8Bit().constData();
         cv::FileStorage fs(str_path,cv::FileStorage::WRITE| cv::FileStorage::FORMAT_YAML);
+        _writeFlag=true;
         if (!fs.isOpened())
         {
             std::cerr << "Failed to save face data to local "<< std::endl;
@@ -85,11 +103,13 @@ public:
         }
         fs<<"}";
         fs.release();
+        _writeFlag=false;
         return true;
 
     }
 
-    bool loadFaceInfo(const QString& path){
+    bool loadFaceInfo(const QString& path) {
+        QMutexLocker locker(&_mutex);
         std::string str_path = path.toLocal8Bit().constData();
         cv::FileStorage fs(str_path,cv::FileStorage::READ| cv::FileStorage::FORMAT_YAML);
         if (!fs.isOpened())
@@ -104,6 +124,7 @@ public:
             std::cerr << "No data found in file "<<std::endl;
             return false;
         }
+        _writeFlag=true;
         int cnt=1;
         for(auto it:node){
             FaceInfo tmpInfo;
@@ -112,11 +133,15 @@ public:
             node[index]["id"]>>tmpInfo.id;
             node[index]["name"]>>tmpInfo.name;
             node[index]["mat"]>>tmpMat;
+//            std::wstring wideString = converter.from_bytes(tmpInfo.name);
+//            tmpInfo.name = converter.to_bytes(wideString);
             if(!_faceData.count(tmpInfo))
                 _faceData.insert(std::pair(tmpInfo,tmpMat));
         }
 
         fs.release();
+        _writeFlag=false;
+        qDebug()<<"loaded face info."<<Qt::endl;
         return true;
     }
     FileManager(const FileManager&) = delete;
@@ -128,6 +153,9 @@ private:
     const std::string _projDir=GET_PRJ_DIR();
     const std::string _saveDir=_projDir+"/savedata/";
     FaceMap _faceData;
+    bool _writeFlag= false;
+public:
+    QMutex _mutex;
 };
 
 

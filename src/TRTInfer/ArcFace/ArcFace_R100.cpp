@@ -213,7 +213,7 @@ ICudaEngine* ArcFace::createEngine(unsigned int maxBatchSize, IBuilder* builder,
     std::cout << "[INFO]: total gpu mem: " << (totalCuMem >> 20) << "MB, free gpu mem: " << (freeCuMem >> 20) << "MB"
               << std::endl;
     std::cout << "[INFO]: max workspace size will use all of free gpu mem" << std::endl;
-    config->setMaxWorkspaceSize(freeCuMem);
+    config->setMaxWorkspaceSize(256<<20);
 #ifdef USE_FP16
     config->setFlag(BuilderFlag::kFP16);
 #endif

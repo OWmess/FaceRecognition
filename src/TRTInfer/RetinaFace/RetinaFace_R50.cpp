@@ -206,7 +206,7 @@ ICudaEngine* RetinaFace::createEngine(unsigned int maxBatchSize, IBuilder* build
     std::cout << "[INFO]: total gpu mem: " << (totalCuMem >> 20) << "MB, free gpu mem: " << (freeCuMem >> 20) << "MB"
               << std::endl;
     std::cout << "[INFO]: max workspace size will use all of free gpu mem" << std::endl;
-    config->setMaxWorkspaceSize(freeCuMem);
+    config->setMaxWorkspaceSize(256<<20);
 
 //    config->setMaxWorkspaceSize(1 << 20);
 #if defined(USE_FP16)
