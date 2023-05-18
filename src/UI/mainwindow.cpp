@@ -75,6 +75,8 @@ void DisplayThread::run()
             emit sendImage(QPixmap::fromImage(qimage));
             emit sendNameStr(nameStr);
             newImage = false;
+            auto fps=calFrameFps();
+            printf("fps:%.1f\n",fps);
         }
         msleep(10);
     }

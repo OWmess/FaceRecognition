@@ -55,12 +55,12 @@ void HandleThread::run() {
                             return;
                         });
                 }
-
             }
 
             emit handleReady(showImg,nameVec);
             _newImage = false;
         }
+
     }
 }
 

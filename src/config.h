@@ -16,8 +16,10 @@
 #define ANTI_SPOOFING_SCALE 4.0
 #define ANTI_SPOOFING_THRESH 0.75
 #define ENABLE_ANTI 0
-#define ROTATE_CAMERA 1
+#define ROTATE_CAMERA 0
 #define CONTRAST_THRESH 0.4
+#define APPID "31XDu9iabhmdUYDEyua5sHw6ggoJYuZwrhu85zdHya5Z"
+#define SDKKEY "EWPf3sCPZZ7NiQiTN3CC5etBhq1UDoEjwZFh79JLDBhi"
 namespace MODELCONFIG{
     class ARCFACE{
     public:

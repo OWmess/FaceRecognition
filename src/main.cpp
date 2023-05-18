@@ -6,7 +6,9 @@
 #include <windows.h>
 #include <QApplication>
 
-
+#include <opencv2/opencv.hpp>
+#include "TRTInfer/ArcSoft/ArcSoft.h"
+#include "utils.h"
 int main(int argc, char *argv[])
 {
     qDebug()<<"欢迎使用人脸识别系统，首次使用可能需要较长时间加载模型\n请稍等……"<<Qt::endl;
@@ -15,6 +17,9 @@ int main(int argc, char *argv[])
     w.show();
 
     return a.exec();
+
+
+
 }
 
 

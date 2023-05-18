@@ -54,9 +54,8 @@ target_link_libraries(arcface nvinfer cudart cuda decodeplugin preluplugins trti
 add_library(retinaface SHARED src/TRTInfer/RetinaFace/RetinaFace_R50.cpp)
 target_link_libraries(retinaface nvinfer cudart cuda decodeplugin preluplugins trtinfer ${OpenCV_LIBS})
 
-add_library(mylib STATIC IMPORTED)
-set_target_properties(mylib PROPERTIES IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/lib/*.lib)
-#
+add_library(arcsoft SHARED src/TRTInfer/ArcSoft/ArcSoft.cpp)
+target_link_libraries(arcsoft ${PROJECT_SOURCE_DIR}/lib/*.lib ${OpenCV_LIBS})
 
 set(PROJECT_FILE
         ${PROJECT_SOURCE_DIR}/src/main.cpp
@@ -100,8 +99,11 @@ qt_add_executable(${PROJECT_NAME}
 
 #add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/src/main.cpp ${SOURCE_FILES})
 target_link_libraries(${PROJECT_NAME}
-        PRIVATE antispoofing arcface retinaface trtinfer mylib
+        PRIVATE antispoofing arcface retinaface trtinfer arcsoft
         Qt${QT_VERSION_MAJOR}::Widgets ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/lib/*.lib)
+
+
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON
         #        WIN32_EXECUTABLE TRUE
