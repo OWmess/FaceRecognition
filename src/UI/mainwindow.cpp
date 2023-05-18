@@ -25,6 +25,7 @@ void CameraThread::run()
     while (!isInterruptionRequested()) {
 
         _camera.read(_frame);
+        cv::resize(_frame,_frame,{640,480});
 #if ROTATE_CAMERA
         cv::transpose(_frame, _frame);
         cv::flip(_frame, _frame, 0);

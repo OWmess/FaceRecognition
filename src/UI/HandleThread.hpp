@@ -11,8 +11,8 @@
 #include "../TRTInfer/ArcFace/ArcFace_R100.h"
 #include "../TRTInfer/AntiSpoofing/AntiSpoofing.h"
 #include<memory>
-
-
+#include <thread>
+#include "../TRTInfer/ArcSoft/ArcSoftThread.h"
 struct NameFormat{
     QString name;
     cv::Point pt;
@@ -53,9 +53,7 @@ private:
     QString _appendId;
     QString _appendName;
 //    std::vector<cv::Mat> norm;
-    std::unique_ptr<TRTInfer> _antiSpoofingPtr = std::make_unique<AntiSpoofing>(
-            GET_PRJ_DIR() + "/models/AntiSpoofing.onnx", MODELCONFIG::ANTISPOOLING::INPUT_W,
-            MODELCONFIG::ANTISPOOLING::INPUT_H, MODELCONFIG::ANTISPOOLING::OUTPUTSIZE);
+    ArcSoftThread _arcSoftThread;
     std::unique_ptr<TRTInfer> _retinaFacePtr{
             new RetinaFace(GET_PRJ_DIR() + "/models/retinaface.wts", MODELCONFIG::RETINAFACE::INPUT_W,
                            MODELCONFIG::RETINAFACE::INPUT_H, MODELCONFIG::RETINAFACE::OUTPUT_SIZE)};

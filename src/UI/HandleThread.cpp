@@ -7,8 +7,9 @@
 #include "../FileManager.hpp"
 #include <codecvt>
 #include <qdebug.h>
-HandleThread::HandleThread(QObject *parent) : QThread(parent), _newImage(false),_saveMode(false) {
 
+HandleThread::HandleThread(QObject *parent) : QThread(parent), _newImage(false),_saveMode(false) {
+    _arcSoftThread.start();
 }
 
 HandleThread::~HandleThread() {
@@ -60,11 +61,12 @@ void HandleThread::run() {
             emit handleReady(showImg,nameVec);
             _newImage = false;
         }
-
+        msleep(10);
     }
 }
 
 std::vector<EmbeddingFormat> HandleThread::process(const cv::Mat& inputMat,cv::Mat& outputMat,int rows, int cols) {
+    _arcSoftThread.setImage(inputMat);
     const cv::Mat& img=inputMat;
     auto detectResult = _retinaFacePtr->infer(img);
     std::vector<EmbeddingFormat> resultNorm;
@@ -74,14 +76,18 @@ std::vector<EmbeddingFormat> HandleThread::process(const cv::Mat& inputMat,cv::M
                                              MODELCONFIG::RETINAFACE::INPUT_H,
                                              i.bbox, i.landmark);
         makeRectSafe(r, MODELCONFIG::RETINAFACE::INPUT_W, MODELCONFIG::RETINAFACE::INPUT_H);
+        if(r.height<100||r.width<100)
+            continue;
         cv::rectangle(outputMat, r, cv::Scalar(0x27, 0xC1, 0x36), 2);
         //cv::putText(tmp, std::to_string((int)(res[j].class_confidence * 100)) + "%", cv::Point(r.x, r.y - 1), cv::FONT_HERSHEY_PLAIN, 1.2, cv::Scalar(0xFF, 0xFF, 0xFF), 1);
         for (int k = 0; k < 10; k += 2) {
             cv::circle(outputMat, cv::Point(i.landmark[k], i.landmark[k + 1]), 1,
                        cv::Scalar(255 * (k > 2), 255 * (k > 0 && k < 8), 255 * (k < 6)), 4);
         }
-        auto antiRst = _antiSpoofingPtr->infer(img, i, ANTI_SPOOFING_THRESH).antiSpoof;
-        std::string antiStr = std::string(antiRst.isFake ? "fake " : "real ");
+        bool liveness=_arcSoftThread.getLiveness();
+        std::string antiStr = std::string(liveness ? "real " : "fake ");
+//        auto antiRst = _antiSpoofingPtr->infer(img, i, ANTI_SPOOFING_THRESH).antiSpoof;
+//        std::string antiStr = std::string(antiRst.isFake ? "fake " : "real ");
 
 
 //        std::cout <<"Anti info: "<< antiRst.isFake << "  conf: " << antiRst.antiSpoofConf << std::endl;
@@ -132,6 +138,7 @@ void HandleThread::updateData(bool mode, const QString& id, const QString& name)
 }
 
 cv::Mat HandleThread::appendProcess(const cv::Mat& inputMat,cv::Mat& outputMat,int rows, int cols) {
+    _arcSoftThread.setImage(inputMat);
     const cv::Mat& img=inputMat;
     auto detectResult = _retinaFacePtr->infer(img);
     if(detectResult.detector.empty()){
@@ -157,8 +164,10 @@ cv::Mat HandleThread::appendProcess(const cv::Mat& inputMat,cv::Mat& outputMat,i
         cv::circle(outputMat, cv::Point(rst1.landmark[k], rst1.landmark[k + 1]), 1,
                    cv::Scalar(255 * (k > 2), 255 * (k > 0 && k < 8), 255 * (k < 6)), 4);
     }
-    auto antiRst = _antiSpoofingPtr->infer(img, rst1, ANTI_SPOOFING_THRESH).antiSpoof;
-    std::string antiStr = std::string(antiRst.isFake ? "fake " : "real ");
+//    auto antiRst = _antiSpoofingPtr->infer(img, rst1, ANTI_SPOOFING_THRESH).antiSpoof;
+//    std::string antiStr = std::string(antiRst.isFake ? "fake " : "real ");
+    bool liveness=_arcSoftThread.getLiveness();
+    std::string antiStr = std::string(liveness ? "real " : "fake ");
     cv::putText(outputMat, antiStr, r.tl(), 1, 1, cv::Scalar(0x27, 0xC1, 0x36));
     cv::Mat resizeImg;
     cv::resize(img(r), resizeImg, {MODELCONFIG::ARCFACE::INPUT_W, MODELCONFIG::ARCFACE::INPUT_H});

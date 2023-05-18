@@ -33,7 +33,7 @@ ArcSoft::ArcSoft() {
         printf("ASFInitEngine sucess: %d\n", res);
 
     ASF_LivenessThreshold threshold = { 0 };
-    threshold.thresholdmodel_BGR = 0.5;
+    threshold.thresholdmodel_BGR = ANTI_SPOOFING_THRESH;
     threshold.thresholdmodel_IR = 0.7;
     res = ASFSetLivenessParam(_handle, &threshold);
     if (res != MOK)
@@ -56,7 +56,7 @@ bool ArcSoft::interLiveness(const cv::Mat src) {
     ASF_MultiFaceInfo detectedFaces = { 0 };
     ASF_FaceFeature feature = { 0 };
     res = ASFDetectFacesEx(_handle, &offscreen, &detectedFaces);
-    std::cout<<"detectedFaces.faceNum: "<<detectedFaces.faceNum<<std::endl;
+//    std::cout<<"detectedFaces.faceNum: "<<detectedFaces.faceNum<<std::endl;
     if(res == MOK&& detectedFaces.faceNum > 1){
         SingleDetectedFaces.faceRect.left = detectedFaces.faceRect[0].left;
         SingleDetectedFaces.faceRect.top = detectedFaces.faceRect[0].top;
@@ -76,11 +76,12 @@ bool ArcSoft::interLiveness(const cv::Mat src) {
     res = ASFProcessEx(_handle, &offscreen, &detectedFaces, processMask);
     if (res != MOK)
         printf("ASFSProcessEx fail: %d\n", res);
-    else
-        printf("ASFProcessEx sucess: %d\n", res);
+//    else
+//        printf("ASFProcessEx sucess: %d\n", res);
 
     ASF_LivenessInfo rgbLivenessInfo = { 0 };
     res = ASFGetLivenessScore(_handle, &rgbLivenessInfo);
+//    std::cout<<"liveness:"<<rgbLivenessInfo.isLive[0]<<std::endl;
     if (res != MOK)
         printf("ASFGetLivenessScore fail: %d\n", res);
     else
