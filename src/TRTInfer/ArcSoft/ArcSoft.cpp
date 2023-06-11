@@ -66,9 +66,9 @@ bool ArcSoft::interLiveness(const cv::Mat src) {
         res = ASFFaceFeatureExtractEx(_handle, &offscreen, &SingleDetectedFaces, &feature);
         if (MOK != res)
             printf("ASFFaceFeatureExtractEx 2 fail: %d\n", res);
-    }else if(res==MOK && detectedFaces.faceNum==0){
+    }else if(res==MOK && detectedFaces.faceNum==0) {
         return false;
-    }else if(!(res==MOK && detectedFaces.faceNum==1)){
+    }else if(!(res==MOK && detectedFaces.faceNum==1)) {
         std::cerr<<"ASFDetectFacesEx fail :"<<res<<std::endl;
     }
 

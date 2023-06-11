@@ -13,6 +13,8 @@ HandleThread::HandleThread(QObject *parent) : QThread(parent), _newImage(false),
 }
 
 HandleThread::~HandleThread() {
+    _arcSoftThread.requestInterruption();
+    _arcSoftThread.wait();
 
 }
 
@@ -84,10 +86,10 @@ std::vector<EmbeddingFormat> HandleThread::process(const cv::Mat& inputMat,cv::M
             cv::circle(outputMat, cv::Point(i.landmark[k], i.landmark[k + 1]), 1,
                        cv::Scalar(255 * (k > 2), 255 * (k > 0 && k < 8), 255 * (k < 6)), 4);
         }
-        bool liveness=_arcSoftThread.getLiveness();
-        std::string antiStr = std::string(liveness ? "real " : "fake ");
-//        auto antiRst = _antiSpoofingPtr->infer(img, i, ANTI_SPOOFING_THRESH).antiSpoof;
-//        std::string antiStr = std::string(antiRst.isFake ? "fake " : "real ");
+//        bool liveness=_arcSoftThread.getLiveness();
+//        std::string antiStr = std::string(liveness ? "real " : "fake ");
+        auto antiRst = _antiSpoofingPtr->infer(img, i, ANTI_SPOOFING_THRESH).antiSpoof;
+        std::string antiStr = std::string(antiRst.isFake ? "fake " : "real ");
 
 
 //        std::cout <<"Anti info: "<< antiRst.isFake << "  conf: " << antiRst.antiSpoofConf << std::endl;
@@ -164,10 +166,10 @@ cv::Mat HandleThread::appendProcess(const cv::Mat& inputMat,cv::Mat& outputMat,i
         cv::circle(outputMat, cv::Point(rst1.landmark[k], rst1.landmark[k + 1]), 1,
                    cv::Scalar(255 * (k > 2), 255 * (k > 0 && k < 8), 255 * (k < 6)), 4);
     }
-//    auto antiRst = _antiSpoofingPtr->infer(img, rst1, ANTI_SPOOFING_THRESH).antiSpoof;
-//    std::string antiStr = std::string(antiRst.isFake ? "fake " : "real ");
-    bool liveness=_arcSoftThread.getLiveness();
-    std::string antiStr = std::string(liveness ? "real " : "fake ");
+    auto antiRst = _antiSpoofingPtr->infer(img, rst1, ANTI_SPOOFING_THRESH).antiSpoof;
+    std::string antiStr = std::string(antiRst.isFake ? "fake " : "real ");
+//    bool liveness=_arcSoftThread.getLiveness();
+//    std::string antiStr = std::string(liveness ? "real " : "fake ");
     cv::putText(outputMat, antiStr, r.tl(), 1, 1, cv::Scalar(0x27, 0xC1, 0x36));
     cv::Mat resizeImg;
     cv::resize(img(r), resizeImg, {MODELCONFIG::ARCFACE::INPUT_W, MODELCONFIG::ARCFACE::INPUT_H});
